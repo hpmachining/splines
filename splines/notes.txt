@@ -1,0 +1,4 @@
+Eigen
+Use Vector2d & Vector3d for 2d and 3d point coordinates
+   squaredNorm() - Magnitude squared of vector.
+   norm() - Magnitude of vector.
