@@ -3,32 +3,26 @@
 #include <iostream>
 #include <Eigen\Dense>
 
-
-Eigen::Affine3d create_rotation_matrix(double ax, double ay, double az) {
-  Eigen::Affine3d rx =
-    Eigen::Affine3d(Eigen::AngleAxisd(ax, Eigen::Vector3d(1, 0, 0)));
-  Eigen::Affine3d ry =
-    Eigen::Affine3d(Eigen::AngleAxisd(ay, Eigen::Vector3d(0, 1, 0)));
-  Eigen::Affine3d rz =
-    Eigen::Affine3d(Eigen::AngleAxisd(az, Eigen::Vector3d(0, 0, 1)));
-  return rz * ry * rx;
-}
-
-using namespace Eigen;
+//using namespace Eigen;
 
 int main(void) {
-  Vector4d xAxis(1.0, 0.0, 0.0, 0.0);
-  Vector4d yAxis(0.0, 1.0, 0.0, 0.0);
-  Vector4d zAxis(0.0, 0.0, 1.0, 0.0);
-  Vector4d origin(0.0, 0.0, 0.0, 1.0);
-  Matrix4d identity;
-  identity.setIdentity();
+  Eigen::Affine3d transform;
+  transform.setIdentity();
+  transform.rotate(Eigen::AngleAxisd(.25 * M_PI, Eigen::Vector3d::UnitZ()));
+  
+  Eigen::Affine3d offset(Eigen::Translation3d(Eigen::Vector3d(1.0, 0.5, -1.0)));
+  transform = offset * transform;
+  std::cout << "Transformation Matrix Rotated and Offset\n" << transform.matrix() << "\n\n";
+  transform.rotate(Eigen::AngleAxisd(.25 * M_PI, Eigen::Vector3d::UnitZ()));
+  std::cout << "Transformation Matrix Rotated Again\n" << transform.matrix() << "\n\n";
 
-  Affine3d r = create_rotation_matrix(0.0, 0.0, .25 * M_PI);
-  Affine3d t(Translation3d(Vector3d(0.0, 0.0, 0.0)));
-  Matrix4d transform = (t * r).matrix();
-
-  std::cout << transform << '\n';
+  Eigen::Vector4d p1(1, 0, 0, 0), p2;
+  std::cout << "Point\n" << p1 << "\n\n";
+  p2 = transform * p1;
+  std::cout << "Point\n" << p2 << "\n\n";
+  p1.w() = 1;
+  p2 = transform * p1;
+  std::cout << "Point\n" << p2 << "\n\n";
 
   return 0;
 }
