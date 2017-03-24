@@ -51,13 +51,24 @@
 int main(void) {
 	Eigen::Vector3d controlPoint;
 	std::vector<Eigen::Vector3d> controlPoints;
+	std::ifstream dataFile("ctrl.dat");
 	
 	while (std::cin >> controlPoint.x() >> controlPoint.y() >> controlPoint.z()) {
+	//while (dataFile >> controlPoint.x() >> controlPoint.y() >> controlPoint.z()) {
 		controlPoints.push_back(controlPoint);
 	}
-
+	std::cout.precision(15);
 	std::vector<double> coeff = GetCoeffFromPoints(controlPoints, false);
 	for (auto i : coeff) {
+		std::cout << i << '\n';
+	}
+	
+	auto uniqueEnd = std::unique(controlPoints.begin(), controlPoints.end(),
+		[](const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs) { return lhs.isApprox(rhs); });
+	controlPoints.erase(uniqueEnd, controlPoints.end());
+	
+	std::cout << '\n';
+	for (auto i : controlPoints) {
 		std::cout << i << '\n';
 	}
 	return 0;

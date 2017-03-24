@@ -1,7 +1,7 @@
 // ConvexHull2D
 // Template class to calculate the 2d convex hull from a 2d point cloud.
 // The ConvexHull2d class takes a std::vector<T>, where <T> is any
-// class or structure that has public "x" and "y" members representing coordinates.
+// class or structure that has public "x()" and "y()" methods representing coordinates.
 //
 // Uses Andrew's Monotone Chain algorithm
 // Algorithm based on code found at this web site:
