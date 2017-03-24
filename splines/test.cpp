@@ -59,9 +59,9 @@ int main(void) {
 	}
 	std::cout.precision(15);
 	std::vector<double> coeff = GetCoeffFromPoints(controlPoints, false);
-	for (auto i : coeff) {
-		std::cout << i << '\n';
-	}
+	//for (auto i : coeff) {
+	//	std::cout << i << '\n';
+	//}
 	
 	auto uniqueEnd = std::unique(controlPoints.begin(), controlPoints.end(),
 		[](const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs) { return lhs.isApprox(rhs); });
@@ -69,7 +69,7 @@ int main(void) {
 	
 	std::cout << '\n';
 	for (auto i : controlPoints) {
-		std::cout << i << '\n';
+		std::cout << i.x() << '\t' << i.y() << '\t' << i.z() << '\n';
 	}
 	return 0;
 }
