@@ -1,0 +1,40 @@
+\hypertarget{splines_8h}{\section{splines.\+h File Reference}
+\label{splines_8h}\index{splines.\+h@{splines.\+h}}
+}
+{\ttfamily \#include $<$vector$>$}\\*
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\footnotesize template$<$typename Scalar , typename Point $>$ }\\std\+::vector$<$ Scalar $>$ \hyperlink{splines_8h_aeee609dcdd02fa2270898a7ca7d249ba}{Calculate\+Coeffients\+From\+Points} (const std\+::vector$<$ Point $>$ \&points, bool is3\+D)
+\begin{DoxyCompactList}\small\item\em Calculate a vector of coefficients derived from a vector of control points of a cubic Bézier spline. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Function Documentation}
+\hypertarget{splines_8h_aeee609dcdd02fa2270898a7ca7d249ba}{\index{splines.\+h@{splines.\+h}!Calculate\+Coeffients\+From\+Points@{Calculate\+Coeffients\+From\+Points}}
+\index{Calculate\+Coeffients\+From\+Points@{Calculate\+Coeffients\+From\+Points}!splines.\+h@{splines.\+h}}
+\subsubsection[{Calculate\+Coeffients\+From\+Points}]{\setlength{\rightskip}{0pt plus 5cm}template$<$typename Scalar , typename Point $>$ std\+::vector$<$Scalar$>$ Calculate\+Coeffients\+From\+Points (
+\begin{DoxyParamCaption}
+\item[{const std\+::vector$<$ Point $>$ \&}]{points, }
+\item[{bool}]{is3\+D}
+\end{DoxyParamCaption}
+)}}\label{splines_8h_aeee609dcdd02fa2270898a7ca7d249ba}
+
+
+Calculate a vector of coefficients derived from a vector of control points of a cubic Bézier spline. 
+
+Size of vector of control points must be in multiples of 4.
+
+
+\begin{DoxyParams}{Parameters}
+{\em points} & Vector of control points. This function will process the vector elements in groups of 4. \\
+\hline
+{\em is3\+D} & Boolean value to determine if 2\+D or 3\+D spline coefficients are returned. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A vector of coefficients calculated from the control points. Coefficients are stored in the order \{ $A_x, B_x, C_x, D_x, A_y, B_y, C_y, D_y$\} and if the points are 3d \{ $A_z, B_z, C_z, D_z$\} 
+\end{DoxyReturn}
+
+
+Definition at line 27 of file splines.\+h.
+

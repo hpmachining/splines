@@ -58,18 +58,22 @@ int main(void) {
 		controlPoints.push_back(controlPoint);
 	}
 	std::cout.precision(15);
-	std::vector<double> coeff = GetCoeffFromPoints(controlPoints, false);
-	//for (auto i : coeff) {
-	//	std::cout << i << '\n';
-	//}
+	//controlPoints.pop_back();
+	std::vector<double> coefficients =
+		hpm::CalculateCoefficientsFromPoints<double, Eigen::Vector3d>(hpm::kCubic, controlPoints, false);
+	for (auto i : coefficients) {
+		std::cout << i << '\n';
+	}
+
+	Eigen::Vector3d coordinate = hpm::CalculateCoordinate(hpm::kCubic, 1, .5, controlPoints);
 	
 	auto uniqueEnd = std::unique(controlPoints.begin(), controlPoints.end(),
 		[](const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs) { return lhs.isApprox(rhs); });
 	controlPoints.erase(uniqueEnd, controlPoints.end());
 	
-	std::cout << '\n';
-	for (auto i : controlPoints) {
-		std::cout << i.x() << '\t' << i.y() << '\t' << i.z() << '\n';
-	}
+	//std::cout << '\n';
+	//for (auto i : controlPoints) {
+	//	std::cout << i.x() << '\t' << i.y() << '\t' << i.z() << '\n';
+	//}
 	return 0;
 }
