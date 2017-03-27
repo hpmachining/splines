@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <cmath>
+#include <exception>
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
 
@@ -49,7 +50,7 @@ CalculateCoefficientsFromPoints(const BezierDegree degree, const std::vector<Poi
 		Scalar Az = 0.0, Bz = 0.0, Cz = 0.0, Dz = 0.0;
 
 		Point cp[4];
-		for (size_t i = 0; i < points.size(); i += 4) {
+		for (size_t i = 0; i < num_control_points; i += 4) {
 			for (size_t j = 0; j < 4; ++j) {
 				cp[j] = points[i + j];
 			}
@@ -92,55 +93,61 @@ CalculateCoefficientsFromPoints(const BezierDegree degree, const std::vector<Poi
 
 template <typename Scalar, typename Point>
 Point
-CalculateCoordinate(const BezierDegree degree, size_t segment_id,
-					Scalar t, const std::vector<Point>& points) {
+CalculateCoordinate(const BezierDegree degree,
+	const long segment_id,
+	const Scalar t,
+	const std::vector<Point>& points,
+	const bool is_3d) {
 	
-	const size_t kControlSize = degree + 1;
-	size_t num_segments = points.size() / kControlSize;
+	// Determine the size of a control point set for one Bézier curve segment,
+	// then check if the input data is valid.
+	const size_t control_size = degree + 1;
+	const size_t num_segments = points.size() / control_size;
 	Point coordinate;
-	if (num_segments == 0 || segment_id > num_segments) {
+	if (num_segments == 0 || segment_id <= 0 || segment_id > num_segments) {
 		return coordinate;
 	}
 
-	// Copy control point std::vector to Eigen::Matrix
-	const size_t kRowSize = points.size();
-	const size_t kColumnSize = coordinate.rows();
-	bool is_3d = (kColumnSize == 3);
-	Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> control_points;
-	control_points.resize(kRowSize, kColumnSize);
+	size_t row_size = points.size();
+	size_t column_size = 2;
 	if (is_3d) {
-		for (auto i = 0; i < kRowSize; ++i) {
+		column_size = 3;
+	}
+
+	// Copy std::vector of control points to an Eigen::Matrix
+	Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> control_points;
+	control_points.resize(row_size, column_size);
+	if (is_3d) {
+		for (auto i = 0; i < row_size; ++i) {
 			control_points(i, 0) = points[i].x();
 			control_points(i, 1) = points[i].y();
 			control_points(i, 2) = points[i].z();
 		}
 	}
 	else {
-		for (auto i = 0; i < kRowSize; ++i) {
+		for (auto i = 0; i < row_size; ++i) {
 			control_points(i, 0) = points[i].x();
 			control_points(i, 1) = points[i].y();
 		}
 	}
 
 	// Create and fill matrix with control points for specified segment
-	size_t segment_index = (segment_id - 1) * kControlSize;
+	size_t segment_index = (segment_id - 1) * control_size;
 	Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> P;
-	P.resize(kControlSize, kColumnSize);
-	P.topLeftCorner(kControlSize, kColumnSize).setZero();
-	//std::cout << control_points << '\n';
-	P =	control_points.block(segment_index, 0, kControlSize, kColumnSize);
-	//std::cout << P << '\n';
+	P.resize(control_size, column_size);
+	P.topLeftCorner(control_size, column_size).setZero();
+	P =	control_points.block(segment_index, 0, control_size, column_size);
 	
 	// Create and fill the time matrix
 	Eigen::Matrix<Scalar, 1, Eigen::Dynamic> time;
-	time.resize(1, kControlSize);
-	for (auto i = 0; i < kControlSize; ++i) {
+	time.resize(1, control_size);
+	for (auto i = 0; i < control_size; ++i) {
 		time(0, i) = std::pow(t, i);
 	}
 	
 	// Create and fill the basis matrix
 	Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> basis;
-	basis.resize(kControlSize, kControlSize);
+	basis.resize(control_size, control_size);
 	switch (degree) {
 	case kCubic: 	
 		basis <<	 
@@ -158,13 +165,16 @@ CalculateCoordinate(const BezierDegree degree, size_t segment_id,
 		break;
 	}
 
-	Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> column, result;
-	column.resize(kControlSize, 1);
-	result.resize(kControlSize, 1);
-	column = P.block(0, 0, kControlSize, 1);
-	std::cout << time << "\n\n" << basis << "\n\n" << P << "\n\n";
+	Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> result;
+	result.resize(control_size, 1);
 	result = time * basis * P;
-	std::cout << result << "\n\n";
+	coordinate.x() = result(0, 0);
+	coordinate.y() = result(0, 1);
+	if (is_3d) {
+		coordinate.z() = result(0, 2);
+	}
+	std::cout << "\n\nTime Matrix\n" << time << "\n\nBasis Matrix\n" << basis 
+		<< "\n\nControl Points\n" << P << "\n\nCalculated Coordinate\n" << coordinate;
 	return coordinate;
 }
 
