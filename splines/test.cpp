@@ -66,8 +66,11 @@ int main(void) {
 	//auto uniqueEnd = std::unique(controlPoints.begin(), controlPoints.end(),
 	//	[](const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs) { return lhs.isApprox(rhs); });
 	//controlPoints.erase(uniqueEnd, controlPoints.end());
-
-	Eigen::Vector2d coordinate = bezier::CalculateCoordinate(kCubic, 2, .5, controlPoints, false);
+	Eigen::Vector2d coordinate;
+	for (auto i = 1; i <= 3; ++i) {
+		coordinate = bezier::CalculateCoordinate(kQuadratic, i, .5, controlPoints, false);
+		std::cout << coordinate.transpose() << '\n';
+	}
 
 	return 0;
 }

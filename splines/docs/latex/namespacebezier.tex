@@ -1,0 +1,110 @@
+\hypertarget{namespacebezier}{}\section{bezier Namespace Reference}
+\label{namespacebezier}\index{bezier@{bezier}}
+\subsection*{Enumerations}
+\begin{DoxyCompactItemize}
+\item 
+enum \hyperlink{namespacebezier_a175e919883bf10c186c78e5e4aed6a7d}{Bezier\+Degree} \{ \hyperlink{namespacebezier_a175e919883bf10c186c78e5e4aed6a7da44e0a040e2a5f67793a24917160df878}{k\+Quadratic} = 2, 
+\hyperlink{namespacebezier_a175e919883bf10c186c78e5e4aed6a7da74da9ce3503d5713c23731eeedd3804f}{k\+Cubic}
+ \}
+\end{DoxyCompactItemize}
+\subsection*{Functions}
+\begin{DoxyCompactItemize}
+\item 
+{\footnotesize template$<$typename Point $>$ }\\std\+::vector$<$ double $>$ \hyperlink{namespacebezier_a4bbd6c4f88a535db34d1e58e26d8b515}{Calculate\+Coefficients\+From\+Points} (const \hyperlink{namespacebezier_a175e919883bf10c186c78e5e4aed6a7d}{Bezier\+Degree} degree, const std\+::vector$<$ Point $>$ \&points, bool is\+\_\+3d)
+\begin{DoxyCompactList}\small\item\em Calculate a vector of coefficients derived from a vector of control points of a cubic Bézier spline. \end{DoxyCompactList}\item 
+{\footnotesize template$<$typename Point $>$ }\\Point \hyperlink{namespacebezier_af793f35d54ec372d8bf3d65801e839ae}{Calculate\+Coordinate} (const \hyperlink{namespacebezier_a175e919883bf10c186c78e5e4aed6a7d}{Bezier\+Degree} degree, const long segment\+\_\+id, const double t, const std\+::vector$<$ Point $>$ \&points, const bool is\+\_\+3d=true)
+\begin{DoxyCompactList}\small\item\em Calculate a position on a Quadratic or Cubic Bézier curve segment using matrices. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\subsection{Enumeration Type Documentation}
+\mbox{\Hypertarget{namespacebezier_a175e919883bf10c186c78e5e4aed6a7d}\label{namespacebezier_a175e919883bf10c186c78e5e4aed6a7d}} 
+\index{bezier@{bezier}!Bezier\+Degree@{Bezier\+Degree}}
+\index{Bezier\+Degree@{Bezier\+Degree}!bezier@{bezier}}
+\subsubsection{\texorpdfstring{Bezier\+Degree}{BezierDegree}}
+{\footnotesize\ttfamily enum \hyperlink{namespacebezier_a175e919883bf10c186c78e5e4aed6a7d}{bezier\+::\+Bezier\+Degree}}
+
+\begin{DoxyEnumFields}{Enumerator}
+\raisebox{\heightof{T}}[0pt][0pt]{\index{k\+Quadratic@{k\+Quadratic}!bezier@{bezier}}\index{bezier@{bezier}!k\+Quadratic@{k\+Quadratic}}}\mbox{\Hypertarget{namespacebezier_a175e919883bf10c186c78e5e4aed6a7da44e0a040e2a5f67793a24917160df878}\label{namespacebezier_a175e919883bf10c186c78e5e4aed6a7da44e0a040e2a5f67793a24917160df878}} 
+k\+Quadratic&\\
+\hline
+
+\raisebox{\heightof{T}}[0pt][0pt]{\index{k\+Cubic@{k\+Cubic}!bezier@{bezier}}\index{bezier@{bezier}!k\+Cubic@{k\+Cubic}}}\mbox{\Hypertarget{namespacebezier_a175e919883bf10c186c78e5e4aed6a7da74da9ce3503d5713c23731eeedd3804f}\label{namespacebezier_a175e919883bf10c186c78e5e4aed6a7da74da9ce3503d5713c23731eeedd3804f}} 
+k\+Cubic&\\
+\hline
+
+\end{DoxyEnumFields}
+
+
+Definition at line 17 of file splines.\+h.
+
+
+
+\subsection{Function Documentation}
+\mbox{\Hypertarget{namespacebezier_a4bbd6c4f88a535db34d1e58e26d8b515}\label{namespacebezier_a4bbd6c4f88a535db34d1e58e26d8b515}} 
+\index{bezier@{bezier}!Calculate\+Coefficients\+From\+Points@{Calculate\+Coefficients\+From\+Points}}
+\index{Calculate\+Coefficients\+From\+Points@{Calculate\+Coefficients\+From\+Points}!bezier@{bezier}}
+\subsubsection{\texorpdfstring{Calculate\+Coefficients\+From\+Points()}{CalculateCoefficientsFromPoints()}}
+{\footnotesize\ttfamily template$<$typename Point $>$ \\
+std\+::vector$<$double$>$ bezier\+::\+Calculate\+Coefficients\+From\+Points (\begin{DoxyParamCaption}\item[{const \hyperlink{namespacebezier_a175e919883bf10c186c78e5e4aed6a7d}{Bezier\+Degree}}]{degree,  }\item[{const std\+::vector$<$ Point $>$ \&}]{points,  }\item[{bool}]{is\+\_\+3d }\end{DoxyParamCaption})}
+
+
+
+Calculate a vector of coefficients derived from a vector of control points of a cubic Bézier spline. 
+
+Size of vector of control points must be in multiples of 4.
+
+
+\begin{DoxyParams}{Parameters}
+{\em degree} & Degree of the Bézier curve. Currently supports Quadratic(2) and Cubic(3) curves. \\
+\hline
+{\em points} & Vector of control points. This function will process the vector elements in groups of 4. \\
+\hline
+{\em is\+\_\+3d} & Boolean value to determine if 2D or 3D spline coefficients are returned. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A vector of coefficients calculated from the control points. Coefficients are stored in the order \{ $A_x, B_x, C_x, D_x, A_y, B_y, C_y, D_y$\} and if the points are 3d \{ $A_z, B_z, C_z, D_z$\} 
+\end{DoxyReturn}
+
+
+Definition at line 39 of file splines.\+h.
+
+\mbox{\Hypertarget{namespacebezier_af793f35d54ec372d8bf3d65801e839ae}\label{namespacebezier_af793f35d54ec372d8bf3d65801e839ae}} 
+\index{bezier@{bezier}!Calculate\+Coordinate@{Calculate\+Coordinate}}
+\index{Calculate\+Coordinate@{Calculate\+Coordinate}!bezier@{bezier}}
+\subsubsection{\texorpdfstring{Calculate\+Coordinate()}{CalculateCoordinate()}}
+{\footnotesize\ttfamily template$<$typename Point $>$ \\
+Point bezier\+::\+Calculate\+Coordinate (\begin{DoxyParamCaption}\item[{const \hyperlink{namespacebezier_a175e919883bf10c186c78e5e4aed6a7d}{Bezier\+Degree}}]{degree,  }\item[{const long}]{segment\+\_\+id,  }\item[{const double}]{t,  }\item[{const std\+::vector$<$ Point $>$ \&}]{points,  }\item[{const bool}]{is\+\_\+3d = {\ttfamily true} }\end{DoxyParamCaption})}
+
+
+
+Calculate a position on a Quadratic or Cubic Bézier curve segment using matrices. 
+
+This function implements the following matrix equations for interpolating a Bézier curve\+:
+
+\subparagraph*{Cubic Equation}
+
+$ B(t) = \begin{bmatrix} 1 & t & t^2 & t^3 \end{bmatrix} \cdot \begin{bmatrix} 1 & 0 & 0 & 0\\ -3 & 3 & 0 & 0\\ 3 & -6 & 3 & 0\\ -1 & 3 & -3 & 1 \end{bmatrix} \cdot \begin{bmatrix} P_1\\ P_2\\ P_3\\ P_4 \end{bmatrix} $ \subparagraph*{Quadratic Equation}
+
+$ B(t) = \begin{bmatrix} 1 & t & t^2 \end{bmatrix} \cdot \begin{bmatrix} 1 & 0 & 0\\ -2 & 2 & 0\\ 1 & -2 & 1 \end{bmatrix} \cdot \begin{bmatrix} P_1\\ P_2\\ P_3 \end{bmatrix} $
+
+
+\begin{DoxyParams}{Parameters}
+{\em degree} & Degree of the Bézier curve. Currently supports Quadratic(2) and Cubic(3) curves. \\
+\hline
+{\em segment\+\_\+id} & Segment number to use for calculation. \\
+\hline
+{\em t} & Time parameter in the interval $t \in [0,1]$ for a point on the curve segemnt. \\
+\hline
+{\em points} & Vector of control points. Number of control points for each segment is $ degree + 1 $ \\
+\hline
+{\em is\+\_\+3d} & Boolean value indicating if the coordinates provided for the control points are 3d $(x, y, z)$ \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+A vector of coordinates of type Point for the calculated position. 
+\end{DoxyReturn}
+
+
+Definition at line 151 of file splines.\+h.
+
