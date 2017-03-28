@@ -12,8 +12,6 @@
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
 
-//using namespace Eigen;
-
 //int main(void) {
 //  Eigen::Affine3d transform;
 //  transform.setIdentity();
@@ -49,17 +47,17 @@
 //}
 
 int main(void) {
-	Eigen::Vector3d controlPoint;
-	std::vector<Eigen::Vector3d> controlPoints;
-	std::ifstream dataFile("ctrl.dat");
-	
-	while (std::cin >> controlPoint.x() >> controlPoint.y() >> controlPoint.z()) {
-	//while (dataFile >> controlPoint.x() >> controlPoint.y() >> controlPoint.z()) {
+	Eigen::Vector2d controlPoint;
+	std::vector<Eigen::Vector2d> controlPoints;
+	using bezier::kCubic;
+	using bezier::kQuadratic;
+
+	while (std::cin >> controlPoint.x() >> controlPoint.y()){// >> controlPoint.z()) {
 		controlPoints.push_back(controlPoint);
 	}
 	std::cout.precision(15);
-	std::vector<double> coefficients =
-		hpm::CalculateCoefficientsFromPoints<double, Eigen::Vector3d>(hpm::kCubic, controlPoints, false);
+	//std::vector<double> coefficients =
+	//	bezier::CalculateCoefficientsFromPoints<double, Eigen::Vector2d>(kCubic, controlPoints, false);
 	//for (auto i : coefficients) {
 	//	std::cout << i << '\n';
 	//}
@@ -69,7 +67,7 @@ int main(void) {
 	//	[](const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs) { return lhs.isApprox(rhs); });
 	//controlPoints.erase(uniqueEnd, controlPoints.end());
 
-	Eigen::Vector3d coordinate = hpm::CalculateCoordinate(hpm::kCubic, 1, 100.0, controlPoints, false);
+	Eigen::Vector2d coordinate = bezier::CalculateCoordinate(kCubic, 2, .5, controlPoints, false);
 
 	return 0;
 }

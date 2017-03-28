@@ -12,10 +12,10 @@
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
 
-namespace hpm {
+namespace bezier {
 
 enum BezierDegree {
-	kQuad = 2,
+	kQuadratic = 2,
 	kCubic,
 };
 
@@ -33,10 +33,10 @@ enum BezierDegree {
 *			{\f$A_z, B_z, C_z, D_z\f$}
 */
 
-template <typename Scalar, typename Point>
-std::vector<Scalar> 
+template <typename Point>
+std::vector<double> 
 CalculateCoefficientsFromPoints(const BezierDegree degree, const std::vector<Point>& points, bool is3d) {
-	std::vector<Scalar> coefficients;
+	std::vector<double> coefficients;
 	//if (degree != kQuadratic || degree != kCubic || ) {
 
 	//}
@@ -45,9 +45,9 @@ CalculateCoefficientsFromPoints(const BezierDegree degree, const std::vector<Poi
 
 	if (num_control_points) {
 
-		Scalar Ax = 0.0, Bx = 0.0, Cx = 0.0, Dx = 0.0;
-		Scalar Ay = 0.0, By = 0.0, Cy = 0.0, Dy = 0.0;
-		Scalar Az = 0.0, Bz = 0.0, Cz = 0.0, Dz = 0.0;
+		double Ax = 0.0, Bx = 0.0, Cx = 0.0, Dx = 0.0;
+		double Ay = 0.0, By = 0.0, Cy = 0.0, Dy = 0.0;
+		double Az = 0.0, Bz = 0.0, Cz = 0.0, Dz = 0.0;
 
 		Point cp[4];
 		for (size_t i = 0; i < num_control_points; i += 4) {
@@ -91,14 +91,16 @@ CalculateCoefficientsFromPoints(const BezierDegree degree, const std::vector<Poi
 }
 
 
-template <typename Scalar, typename Point>
+template <typename Point>
 Point
 CalculateCoordinate(const BezierDegree degree,
 	const long segment_id,
-	const Scalar t,
+	const double t,
 	const std::vector<Point>& points,
 	const bool is_3d) {
 	
+	using Eigen::Dynamic;
+
 	// Determine the size of a control point set for one Bézier curve segment,
 	// then check if the input data is valid.
 	const size_t control_size = degree + 1;
@@ -108,74 +110,72 @@ CalculateCoordinate(const BezierDegree degree,
 		return coordinate;
 	}
 
-	size_t row_size = points.size();
 	size_t column_size = 2;
 	if (is_3d) {
 		column_size = 3;
 	}
 
 	// Copy std::vector of control points to an Eigen::Matrix
-	Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> control_points;
-	control_points.resize(row_size, column_size);
+	size_t segment_index = (segment_id - 1) * control_size;
+	Eigen::Matrix<double, Dynamic, Dynamic> control_points;
+	control_points.resize(control_size, column_size);
 	if (is_3d) {
-		for (auto i = 0; i < row_size; ++i) {
-			control_points(i, 0) = points[i].x();
-			control_points(i, 1) = points[i].y();
-			control_points(i, 2) = points[i].z();
+		for (size_t i = 0, p = segment_index; p < segment_index + control_size; ++i, ++p) {
+			control_points(i, 0) = points[p][0];
+			control_points(i, 1) = points[p][1];
+			control_points(i, 2) = points[p][2];
 		}
 	}
 	else {
-		for (auto i = 0; i < row_size; ++i) {
-			control_points(i, 0) = points[i].x();
-			control_points(i, 1) = points[i].y();
+		for (size_t i = 0, p = segment_index; p < segment_index + control_size; ++i, ++p) {
+			control_points(i, 0) = points[p][0];
+			control_points(i, 1) = points[p][1];
 		}
 	}
 
-	// Create and fill matrix with control points for specified segment
-	size_t segment_index = (segment_id - 1) * control_size;
-	Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> P;
-	P.resize(control_size, column_size);
-	P.topLeftCorner(control_size, column_size).setZero();
-	P =	control_points.block(segment_index, 0, control_size, column_size);
+	//// Create and fill matrix with control points for specified segment
+	//Eigen::Matrix<double, Dynamic, Dynamic> P;
+	//P.resize(control_size, column_size);
+	//P.topLeftCorner(control_size, column_size).setZero();
+	//P =	control_points.block(segment_index, 0, control_size, column_size);
 	
 	// Create and fill the time matrix
-	Eigen::Matrix<Scalar, 1, Eigen::Dynamic> time;
+	Eigen::Matrix<double, 1, Dynamic> time;
 	time.resize(1, control_size);
 	for (auto i = 0; i < control_size; ++i) {
 		time(0, i) = std::pow(t, i);
 	}
 	
 	// Create and fill the basis matrix
-	Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> basis;
+	Eigen::Matrix<double, Dynamic, Dynamic> basis;
 	basis.resize(control_size, control_size);
 	switch (degree) {
-	case kCubic: 	
-		basis <<	 
-			 1,  0,  0, 0,
-			-3,  3,  0, 0,
-			 3, -6,  3, 0,
-			-1,  3, -3, 1;
-
-		break;
-	case kQuad: 
+	case kCubic:
 		basis <<
-			 1,  0, 0,
-			-2,  2, 0,
-			 1, -2, 1;
+			1,  0,  0, 0,
+			-3,  3,  0, 0,
+			3, -6,  3, 0,
+			-1,  3, -3, 1;
+		break;
+	case kQuadratic:
+		basis <<
+			1, 0, 0,
+			-2, 2, 0,
+			1, -2, 1;
 		break;
 	}
 
-	Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> result;
+	Eigen::Matrix<double, Dynamic, Dynamic> result;
 	result.resize(control_size, 1);
-	result = time * basis * P;
-	coordinate.x() = result(0, 0);
-	coordinate.y() = result(0, 1);
+	result = time * basis * control_points;
+	coordinate[0] = result(0, 0);
+	coordinate[1] = result(0, 1);
 	if (is_3d) {
-		coordinate.z() = result(0, 2);
+		coordinate[2] = result(0, 2);
 	}
-	std::cout << "\n\nTime Matrix\n" << time << "\n\nBasis Matrix\n" << basis 
-		<< "\n\nControl Points\n" << P << "\n\nCalculated Coordinate\n" << coordinate;
+	std::cout << "Time Matrix\n" << time << "\n\nBasis Matrix\n" << basis 
+		<< "\n\nControl Points\n" << control_points << "\n\nCalculated Coordinate\n" << coordinate;
 	return coordinate;
 }
 
-}	// end namespace hpm
+}	// end namespace bezier
