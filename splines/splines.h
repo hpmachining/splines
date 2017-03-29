@@ -14,10 +14,25 @@
 
 namespace bezier {
 
+/** Used to specify the degree of the curve */
 enum BezierDegree {
+	/** Degree 2 */
 	kQuadratic = 2,
+	/** Degree 3 */
 	kCubic,
 };
+
+enum Dimension {
+	k2d = 2,
+	k3d,
+};
+
+template <typename Point>
+std::vector<double> CalculateCoefficientsFromPoints(const BezierDegree degree,
+	const std::vector<Point>& points, bool is_3d);
+
+template <typename Scalar, Dimension dimension, BezierDegree degree, typename Point>
+Point CalculateCoordinate(const long segment_id, const Scalar t, const std::vector<Point>& points);
 
 /**	@brief	Calculate a vector of coefficients derived from a vector of control points
 *			of a cubic Bézier spline.
@@ -95,65 +110,25 @@ CalculateCoefficientsFromPoints(const BezierDegree degree, const std::vector<Poi
 /**	@brief	Calculate a position on a Quadratic or Cubic Bézier curve segment
 			using matrices
 
-			This function implements the following matrix equations for 
-			interpolating a Bézier curve:
-
-			#####Cubic Equation###
-			\f$
-			B(t) =
-			\begin{bmatrix} 1 & t & t^2 & t^3 \end{bmatrix}
-			\cdot
-			\begin{bmatrix}
-			1 & 0 & 0 & 0\\
-			-3 & 3 & 0 & 0\\
-			3 & -6 & 3 & 0\\
-			-1 & 3 & -3 & 1
-			\end{bmatrix}
-			\cdot
-			\begin{bmatrix}
-			P_1\\
-			P_2\\
-			P_3\\
-			P_4
-			\end{bmatrix}
-			\f$
-			#####Quadratic Equation###
-			\f$
-			B(t) =
-			\begin{bmatrix} 1 & t & t^2 \end{bmatrix}
-			\cdot
-			\begin{bmatrix}
-			1 & 0 & 0\\
-			-2 & 2 & 0\\
-			1 & -2 & 1
-			\end{bmatrix}
-			\cdot
-			\begin{bmatrix}
-			P_1\\
-			P_2\\
-			P_3
-			\end{bmatrix}
-			\f$
-
-	@param	degree Degree of the Bézier curve. Currently supports Quadratic(2) and Cubic(3) curves.
+	@tparam Scalar Type of data being passed in. Valid types are float and double.
+	@tparam	degree Degree of the Bézier curve. Valid options are bezier::kQuadratic(2) and Cubic(3) curves.
+	@tparam Point Container type for the points. Must have [] accessor. [0] = x coordinate,
+			[1] = y coordinate and if 3d, [2] = z coordinate.
 	@param	segment_id Segment number to use for calculation.
 	@param	t Time parameter in the interval \f$t \in [0,1]\f$ for a point on the curve segemnt.
+			Values outside of this range may be used to calculate a coordinate on a natural
+			extension of the curve.
 	@param	points Vector of control points. Number of control points 
 			for each segment is \f$ degree + 1 \f$
 	@param	is_3d Boolean value indicating if the coordinates provided for the
-			control points are 3d \f$(x, y, z)\f$
+			control points are 3d \f$(x, y, z)\f$. Set to false for 2d \f$(c,y)\f$
 	@return	A vector of coordinates of type Point for the calculated position.
 */
 
-template <typename Point>
-Point
-CalculateCoordinate(const BezierDegree degree,
-	const long segment_id,
-	const double t,
-	const std::vector<Point>& points,
-	const bool is_3d = true) {
-	
+template <typename Scalar, Dimension dimension, BezierDegree degree, typename Point>
+Point CalculateCoordinate(const long segment_id, const Scalar t, const std::vector<Point>& points) {
 	using Eigen::Dynamic;
+	const bool is_3d = (dimension == k3d);
 
 	// Determine the size of a control point set for one Bézier curve segment,
 	// then check if the input data is valid.
@@ -164,15 +139,9 @@ CalculateCoordinate(const BezierDegree degree,
 		return coordinate;
 	}
 
-	size_t column_size = 2;
-	if (is_3d) {
-		column_size = 3;
-	}
-
 	// Create and fill Eigen::Matrix with control points for specified segment
-	size_t segment_index = (segment_id - 1) * control_size;
-	Eigen::Matrix<double, Dynamic, Dynamic> control_points;
-	control_points.resize(control_size, column_size);
+	const size_t segment_index = (segment_id - 1) * control_size;
+	Eigen::Matrix<Scalar, control_size, 3> control_points;
 	if (is_3d) {
 		for (size_t i = 0, p = segment_index; p < segment_index + control_size; ++i, ++p) {
 			control_points(i, 0) = points[p][0];
@@ -186,18 +155,15 @@ CalculateCoordinate(const BezierDegree degree,
 			control_points(i, 1) = points[p][1];
 		}
 	}
-
 	
 	// Create and fill the time matrix
-	Eigen::Matrix<double, 1, Dynamic> time;
-	time.resize(1, control_size);
+	Eigen::Matrix<Scalar, 1, control_size> time;
 	for (auto i = 0; i < control_size; ++i) {
 		time(0, i) = std::pow(t, i);
 	}
 	
 	// Create and fill the basis matrix
-	Eigen::Matrix<double, Dynamic, Dynamic> basis;
-	basis.resize(control_size, control_size);
+	Eigen::Matrix<Scalar, control_size, control_size> basis;
 	switch (degree) {
 	case kCubic:
 		basis <<
@@ -215,16 +181,13 @@ CalculateCoordinate(const BezierDegree degree,
 	}
 
 	// Calculate the coordinate
-	Eigen::Matrix<double, Dynamic, Dynamic> result;
-	result.resize(control_size, 1);
+	Eigen::Matrix<Scalar, control_size, 1> result;
 	result = time * basis * control_points;
 	coordinate[0] = result(0, 0);
-	coordinate[1] = result(0, 1);
+	coordinate[1] = result(1, 0);
 	if (is_3d) {
-		coordinate[2] = result(0, 2);
+		coordinate[2] = result(2, 0);
 	}
-	//std::cout << "Time Matrix\n" << time << "\n\nBasis Matrix\n" << basis 
-	//	<< "\n\nControl Points\n" << control_points << "\n\nCalculated Coordinate\n" << coordinate;
 	return coordinate;
 }
 

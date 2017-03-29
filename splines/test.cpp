@@ -47,17 +47,19 @@
 //}
 
 int main(void) {
-	Eigen::Vector2d controlPoint;
-	std::vector<Eigen::Vector2d> controlPoints;
+	Eigen::Vector2f controlPoint;
+	std::vector<Eigen::Vector2f> controlPoints;
 	using bezier::kCubic;
 	using bezier::kQuadratic;
+	using bezier::k2d;
+	using bezier::k3d;
 
 	while (std::cin >> controlPoint.x() >> controlPoint.y()){// >> controlPoint.z()) {
 		controlPoints.push_back(controlPoint);
 	}
 	std::cout.precision(15);
 	//std::vector<double> coefficients =
-	//	bezier::CalculateCoefficientsFromPoints<double, Eigen::Vector2d>(kCubic, controlPoints, false);
+	//	bezier::CalculateCoefficientsFromPoints<double, Eigen::Vector2f>(kCubic, controlPoints, false);
 	//for (auto i : coefficients) {
 	//	std::cout << i << '\n';
 	//}
@@ -66,11 +68,9 @@ int main(void) {
 	//auto uniqueEnd = std::unique(controlPoints.begin(), controlPoints.end(),
 	//	[](const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs) { return lhs.isApprox(rhs); });
 	//controlPoints.erase(uniqueEnd, controlPoints.end());
-	Eigen::Vector2d coordinate;
-	for (auto i = 1; i <= 3; ++i) {
-		coordinate = bezier::CalculateCoordinate(kQuadratic, i, .5, controlPoints, false);
-		std::cout << coordinate.transpose() << '\n';
-	}
+	Eigen::Vector2f coordinate;
+	coordinate = bezier::CalculateCoordinate<float, bezier::k2d, kQuadratic>(1, 1, controlPoints);
+	std::cout << coordinate.transpose() << '\n';
 
 	return 0;
 }
