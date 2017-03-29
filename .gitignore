@@ -242,6 +242,6 @@ ModelManifest.xml
 .fake/
 
 # Doxygen build files
-docs/[Hh]tml/
-docs/[Ll]atex/
+**/docs/[Hh]tml/
+**/docs/[Ll]atex/
 
