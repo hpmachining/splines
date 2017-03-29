@@ -240,3 +240,8 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+
+# Doxygen build files
+doc/[Hh]tml/
+doc/[Ll]atex/
+
