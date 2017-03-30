@@ -8,31 +8,33 @@
 
 #include <vector>
 #include <cmath>
-#include <exception>
+#include <iostream>
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
 
 namespace bezier {
 
 /** Used to specify the degree of the curve */
-enum BezierDegree {
-	/** Degree 2 */
+enum Degree {
+	/** Degree = 2 */
 	kQuadratic = 2,
-	/** Degree 3 */
+	/** Degree = 3 */
 	kCubic,
 };
 
+/** Used to specify the coordinate dimension */
 enum Dimension {
+	/** 2d coordinates \f$(x, y)\f$ */
 	k2d = 2,
+	/** 3d coordinates \f$(x, y, z)\f$ */
 	k3d,
 };
 
-template <typename Point>
-std::vector<double> CalculateCoefficientsFromPoints(const BezierDegree degree,
-	const std::vector<Point>& points, bool is_3d);
+template <typename Scalar, Dimension, Degree, typename Point>
+std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points);
 
-template <typename Scalar, Dimension dimension, BezierDegree degree, typename Point>
-Point CalculateCoordinate(const long segment_id, const Scalar t, const std::vector<Point>& points);
+template <typename Scalar, Dimension, Degree, typename Point>
+Point CalculateCoordinate(const std::vector<Point>& points, const long segment_id, const Scalar t);
 
 /**	@brief	Calculate a vector of coefficients derived from a vector of control points
 *			of a cubic Bézier spline.
@@ -49,60 +51,55 @@ Point CalculateCoordinate(const long segment_id, const Scalar t, const std::vect
 *			{\f$A_z, B_z, C_z, D_z\f$}
 */
 
-template <typename Point>
-std::vector<double> 
-CalculateCoefficientsFromPoints(const BezierDegree degree, const std::vector<Point>& points, bool is_3d) {
-	std::vector<double> coefficients;
-	//if (degree != kQuadratic || degree != kCubic || ) {
+template <typename Scalar, Dimension dimension, Degree degree, typename Point>
+std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points) {
+	//const bool is_3d = (dimension == k3d);
+	const size_t control_size = degree + 1;
+	//Eigen::Matrix<Scalar, control_size, control_size> basis;
+	//basis <<
+	//	-1, 3, -3, 1,
+	//	3, -6, 3, 0,
+	//	-3, 3, 0, 0,
+	//	1, 0, 0, 0;
+	Eigen::Matrix<Scalar, control_size, control_size> basis;
+	switch (degree) {
+	case kCubic:
+		basis <<
+			-1, 3, -3, 1,
+			3, -6, 3, 0,
+			-3, 3, 0, 0,
+			1, 0, 0, 0;
+		break;
+	case kQuadratic:
+		basis <<
+			1, -2, 1,
+			-2, 2, 0,
+			1, 0, 0;
+		break;
+	}
 
-	//}
-	size_t increment = degree + 1;
-	size_t num_control_points = points.size() / increment;
-
-	if (num_control_points) {
-
-		double Ax = 0.0, Bx = 0.0, Cx = 0.0, Dx = 0.0;
-		double Ay = 0.0, By = 0.0, Cy = 0.0, Dy = 0.0;
-		double Az = 0.0, Bz = 0.0, Cz = 0.0, Dz = 0.0;
-
-		Point cp[4];
-		for (size_t i = 0; i < num_control_points; i += 4) {
-			for (size_t j = 0; j < 4; ++j) {
-				cp[j] = points[i + j];
+	Eigen::Matrix<Scalar, control_size, dimension> P;
+	Eigen::Matrix<Scalar, control_size, dimension> result;
+	Eigen::Matrix<Scalar, dimension, control_size> output;
+	std::vector<Scalar> coefficients;
+	const size_t num_segments = points.size() / control_size;	// Omits last set of control points if not a complete set.
+	if (num_segments) {
+		for (auto i = 0; i < num_segments * control_size; i += control_size) {
+			for (auto j = 0; j < control_size; ++j) {
+				P.block<1, dimension>(j, 0) = points[i + j];
 			}
-
-			Ax = cp[3].x() - 3.0 * cp[2].x() + 3.0 * cp[1].x() - cp[0].x();
-			Ay = cp[3].y() - 3.0 * cp[2].y() + 3.0 * cp[1].y() - cp[0].y();
-			Bx = 3.0 * cp[2].x() - 6.0 * cp[1].x() + 3.0 * cp[0].x();
-			By = 3.0 * cp[2].y() - 6.0 * cp[1].y() + 3.0 * cp[0].y();
-			Cx = 3.0 * (cp[1].x() - cp[0].x());
-			Cy = 3.0 * (cp[1].y() - cp[0].y());
-			Dx = cp[0].x();
-			Dy = cp[0].y();
-
-			coefficients.push_back(Ax);
-			coefficients.push_back(Bx);
-			coefficients.push_back(Cx);
-			coefficients.push_back(Dx);
-
-			coefficients.push_back(Ay);
-			coefficients.push_back(By);
-			coefficients.push_back(Cy);
-			coefficients.push_back(Dy);
-
-			if (is_3d) {
-				Az = cp[3].z() - 3.0 * cp[2].z() + 3.0 * cp[1].z() - cp[0].z();
-				Bz = 3.0 * cp[2].z() - 6.0 * cp[1].z() + 3.0 * cp[0].z();
-				Cz = 3.0 * (cp[1].z() - cp[0].z());
-				Dz = cp[0].z();
-
-				coefficients.push_back(Az);
-				coefficients.push_back(Bz);
-				coefficients.push_back(Cz);
-				coefficients.push_back(Dz);
+			result = basis * P;
+			output = result.transpose();
+			for (auto p = 0; p < output.rows(); ++p) {
+				for (auto q = 0; q < output.cols(); ++q) {
+					coefficients.push_back(output(p, q));
+				}
 			}
 		}
 	}
+	//std::cout << basis << "\n\n";
+	//basis.colwise().reverseInPlace();
+	//std::cout << basis << "\n\n";
 	return coefficients;
 }
 
@@ -111,22 +108,23 @@ CalculateCoefficientsFromPoints(const BezierDegree degree, const std::vector<Poi
 			using matrices
 
 	@tparam Scalar Type of data being passed in. Valid types are float and double.
-	@tparam	degree Degree of the Bézier curve. Valid options are bezier::kQuadratic(2) and Cubic(3) curves.
+	@tparam Dimension Dimension of control point coordinates.
+			Valid options are bezier::k2d \f$(x, y)\f$ or bezier::k3d \f$(x, y, z)\f$
+	@tparam	Degree Degree of the Bézier curve. 
+			Valid options are bezier::kQuadratic (2) and bezier::kCubic (3).
 	@tparam Point Container type for the points. Must have [] accessor. [0] = x coordinate,
 			[1] = y coordinate and if 3d, [2] = z coordinate.
 	@param	segment_id Segment number to use for calculation.
 	@param	t Time parameter in the interval \f$t \in [0,1]\f$ for a point on the curve segemnt.
 			Values outside of this range may be used to calculate a coordinate on a natural
 			extension of the curve.
-	@param	points Vector of control points. Number of control points 
-			for each segment is \f$ degree + 1 \f$
-	@param	is_3d Boolean value indicating if the coordinates provided for the
-			control points are 3d \f$(x, y, z)\f$. Set to false for 2d \f$(c,y)\f$
-	@return	A vector of coordinates of type Point for the calculated position.
+	@param	points std::vector of control points. Number of control points 
+			for each segment must be \f$ (degree + 1) \f$
+	@return	A vector of coordinates of type \<**Point**\> for the calculated position.
 */
 
-template <typename Scalar, Dimension dimension, BezierDegree degree, typename Point>
-Point CalculateCoordinate(const long segment_id, const Scalar t, const std::vector<Point>& points) {
+template <typename Scalar, Dimension dimension, Degree degree, typename Point>
+Point CalculateCoordinate(const std::vector<Point>& points, const long segment_id, const Scalar t) {
 	using Eigen::Dynamic;
 	const bool is_3d = (dimension == k3d);
 
@@ -141,7 +139,7 @@ Point CalculateCoordinate(const long segment_id, const Scalar t, const std::vect
 
 	// Create and fill Eigen::Matrix with control points for specified segment
 	const size_t segment_index = (segment_id - 1) * control_size;
-	Eigen::Matrix<Scalar, control_size, 3> control_points;
+	Eigen::Matrix<Scalar, control_size, dimension> control_points;
 	if (is_3d) {
 		for (size_t i = 0, p = segment_index; p < segment_index + control_size; ++i, ++p) {
 			control_points(i, 0) = points[p][0];
@@ -181,7 +179,7 @@ Point CalculateCoordinate(const long segment_id, const Scalar t, const std::vect
 	}
 
 	// Calculate the coordinate
-	Eigen::Matrix<Scalar, 3, 1> result;
+	Eigen::Matrix<Scalar, dimension, 1> result;
 	result = time * basis * control_points;
 	coordinate[0] = result(0, 0);
 	coordinate[1] = result(1, 0);
