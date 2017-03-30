@@ -47,30 +47,48 @@
 //}
 
 int main(void) {
-	Eigen::Vector2f controlPoint;
-	std::vector<Eigen::Vector2f> controlPoints;
 	using bezier::kCubic;
 	using bezier::kQuadratic;
 	using bezier::k2d;
 	using bezier::k3d;
 
-	while (std::cin >> controlPoint.x() >> controlPoint.y()){// >> controlPoint.z()) {
-		controlPoints.push_back(controlPoint);
-	}
-	std::cout.precision(15);
 	//std::vector<double> coefficients =
 	//	bezier::CalculateCoefficientsFromPoints<double, Eigen::Vector2f>(kCubic, controlPoints, false);
 	//for (auto i : coefficients) {
 	//	std::cout << i << '\n';
 	//}
-	
 	//// Routine for eliminating duplicate points to make b-spline control points
 	//auto uniqueEnd = std::unique(controlPoints.begin(), controlPoints.end(),
 	//	[](const Eigen::Vector3d& lhs, const Eigen::Vector3d& rhs) { return lhs.isApprox(rhs); });
 	//controlPoints.erase(uniqueEnd, controlPoints.end());
-	Eigen::Vector2f coordinate;
-	coordinate = bezier::CalculateCoordinate<float, bezier::k2d, kQuadratic>(1, 1, controlPoints);
-	std::cout << coordinate.transpose() << '\n';
+	
+	Eigen::Vector2d controlPoint;
+	std::vector<Eigen::Vector2d> controlPoints;
+	while (std::cin >> controlPoint.x() >> controlPoint.y()) {
+		controlPoints.push_back(controlPoint);
+	}
+	Eigen::Vector2d coordinate;
+	for (auto i = 1; i <= controlPoints.size() / 3; ++i) {
+		coordinate = bezier::CalculateCoordinate<double, k2d, kQuadratic>(i, .25, controlPoints);
+		std::cout.precision(5);
+		std::cout << coordinate.transpose() << '\n';
+		coordinate = bezier::CalculateCoordinate<double, k2d, kQuadratic>(i, .5, controlPoints);
+		std::cout << coordinate.transpose() << '\n';
+		coordinate = bezier::CalculateCoordinate<double, k2d, kQuadratic>(i, .75, controlPoints);
+		std::cout << coordinate.transpose() << '\n';
+	}
+
+	//Eigen::Vector3d controlPoint;
+	//std::vector<Eigen::Vector3d> controlPoints;
+	//while (std::cin >> controlPoint.x() >> controlPoint.y() >> controlPoint.z()) {
+	//	controlPoints.push_back(controlPoint);
+	//}
+	//Eigen::Vector3d coordinate;
+	//for (auto i = 1; i <= controlPoints.size() / 4; ++i) {
+	//	coordinate = bezier::CalculateCoordinate<double, k3d, kCubic>(i, .5, controlPoints);
+	//	std::cout.precision(5);
+	//	std::cout << coordinate.transpose() << '\n';
+	//}
 
 	return 0;
 }

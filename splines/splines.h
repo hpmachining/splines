@@ -181,7 +181,7 @@ Point CalculateCoordinate(const long segment_id, const Scalar t, const std::vect
 	}
 
 	// Calculate the coordinate
-	Eigen::Matrix<Scalar, control_size, 1> result;
+	Eigen::Matrix<Scalar, 3, 1> result;
 	result = time * basis * control_points;
 	coordinate[0] = result(0, 0);
 	coordinate[1] = result(1, 0);
