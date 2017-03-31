@@ -13,36 +13,24 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="Data">
-      <UniqueIdentifier>{cbbee667-e60c-4af8-bca6-392b4fdb1fb6}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\tests">
-      <UniqueIdentifier>{ae5c5ab3-f07c-4835-be65-c3eb43d33b70}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="splines.h">
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
-    <None Include="data\ctrl.dat">
-      <Filter>Data</Filter>
-    </None>
-    <None Include="data\plot.gp">
-      <Filter>Data</Filter>
-    </None>
-    <None Include="data\spline.dat">
-      <Filter>Data</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="notes.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="test.cpp">
-      <Filter>Source Files\tests</Filter>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="unittest1.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

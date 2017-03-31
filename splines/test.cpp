@@ -49,7 +49,7 @@
 int main(void) {
 	using bezier::kCubic;
 	using bezier::kQuadratic;
-	using bezier::k2d;
+	using bezier::k2d;	
 	using bezier::k3d;
 
 	//Eigen::Vector3d controlPoint;
@@ -71,7 +71,6 @@ int main(void) {
 	for (auto i : coefficients) {
 		std::cout << i << '\n';
 	}
-
 
 	//// Routine for eliminating duplicate points to make b-spline control points
 	//auto uniqueEnd = std::unique(controlPoints.begin(), controlPoints.end(),

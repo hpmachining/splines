@@ -9,12 +9,13 @@
 #include <vector>
 #include <cmath>
 #include <iostream>
+#include <array>
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
 
 namespace bezier {
 
-/** Used to specify the degree of the curve */
+/** Specifies the degree of the curve */
 enum Degree {
 	/** Degree = 2 */
 	kQuadratic = 2,
@@ -22,13 +23,34 @@ enum Degree {
 	kCubic,
 };
 
-/** Used to specify the coordinate dimension */
+/** Specifies the coordinate dimension */
 enum Dimension {
 	/** 2d coordinates \f$(x, y)\f$ */
 	k2d = 2,
 	/** 3d coordinates \f$(x, y, z)\f$ */
 	k3d,
 };
+
+template <typename Scalar>
+Eigen::Matrix<Scalar, 4, 4> GetCubicBasis() {
+	Eigen::Matrix<Scalar, 4, 4> basis;
+	basis <<
+		1, 0, 0, 0,
+		-3, 3, 0, 0,
+		3, -6, 3, 0,
+		-1, 3, -3, 1;
+	return basis;
+}
+
+template <typename Scalar>
+Eigen::Matrix<Scalar, 3, 3> GetQuadraticBasis() {
+	Eigen::Matrix<Scalar, 3, 3> basis;
+	basis <<
+		1, 0, 0,
+		-2, 2, 0,
+		1, -2, 1;
+	return basis;
+}
 
 template <typename Scalar, Dimension, Degree, typename Point>
 std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points);
@@ -53,28 +75,17 @@ Point CalculateCoordinate(const std::vector<Point>& points, const long segment_i
 
 template <typename Scalar, Dimension dimension, Degree degree, typename Point>
 std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points) {
-	//const bool is_3d = (dimension == k3d);
 	const size_t control_size = degree + 1;
-	//Eigen::Matrix<Scalar, control_size, control_size> basis;
-	//basis <<
-	//	-1, 3, -3, 1,
-	//	3, -6, 3, 0,
-	//	-3, 3, 0, 0,
-	//	1, 0, 0, 0;
+	// Create and fill the basis matrix
 	Eigen::Matrix<Scalar, control_size, control_size> basis;
 	switch (degree) {
 	case kCubic:
-		basis <<
-			-1, 3, -3, 1,
-			3, -6, 3, 0,
-			-3, 3, 0, 0,
-			1, 0, 0, 0;
+		basis << GetCubicBasis<Scalar>();
+		basis.colwise().reverseInPlace();
 		break;
 	case kQuadratic:
-		basis <<
-			1, -2, 1,
-			-2, 2, 0,
-			1, 0, 0;
+		basis << GetQuadraticBasis<Scalar>();
+		basis.colwise().reverseInPlace(); 
 		break;
 	}
 
@@ -97,9 +108,6 @@ std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points) {
 			}
 		}
 	}
-	//std::cout << basis << "\n\n";
-	//basis.colwise().reverseInPlace();
-	//std::cout << basis << "\n\n";
 	return coefficients;
 }
 
@@ -164,17 +172,10 @@ Point CalculateCoordinate(const std::vector<Point>& points, const long segment_i
 	Eigen::Matrix<Scalar, control_size, control_size> basis;
 	switch (degree) {
 	case kCubic:
-		basis <<
-			1,  0,  0, 0,
-			-3,  3,  0, 0,
-			3, -6,  3, 0,
-			-1,  3, -3, 1;
+		basis << GetCubicBasis<Scalar>();
 		break;
 	case kQuadratic:
-		basis <<
-			1, 0, 0,
-			-2, 2, 0,
-			1, -2, 1;
+		basis << GetQuadraticBasis<Scalar>();
 		break;
 	}
 
