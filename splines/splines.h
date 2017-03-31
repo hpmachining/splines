@@ -190,4 +190,68 @@ Point CalculateCoordinate(const std::vector<Point>& points, const long segment_i
 	return coordinate;
 }
 
+template <typename Scalar, Dimension dimension, Degree degree, typename Point>
+Point CalculateTangent(const std::vector<Point>& points, const long segment_id, const Scalar t) {
+	bool is_3d = (dimension == k3d);
+
+	// Determine the size of a control point set for one Bézier curve segment,
+	// then check if the input data is valid.
+	const size_t control_size = degree + 1;
+	const size_t num_segments = points.size() / control_size;	// Omits last set of control points if not a complete set.
+	Point tangent;
+	if (num_segments == 0 || segment_id <= 0 || segment_id > num_segments) {
+		return tangent;
+	}
+
+	// Get control points for specified segment
+	std::vector<Point> control_points;
+	const size_t segment_index = (segment_id - 1) * control_size;
+	for (auto i = segment_index; i < segment_index + control_size; ++i) {
+		control_points.push_back(points[i]);
+	}
+
+	// Get coeffecients of specified segment
+	std::vector<Scalar> coefficients;
+	coefficients = CalculateCoefficients<Scalar, dimension, degree>(control_points);
+
+	// Create and fill Eigen matrix with coefficients
+	Eigen::Matrix<Scalar, degree, dimension> C;
+	C(0, 0) = coefficients[0];
+	C(1, 0) = coefficients[1];
+	C(2, 0) = coefficients[2];
+	
+	C(0, 1) = coefficients[4];
+	C(1, 1) = coefficients[5];
+	C(2, 1) = coefficients[6];
+
+	if (is_3d) {
+		C(0, 2) = coefficients[8];
+		C(1, 2) = coefficients[9];
+		C(2, 2) = coefficients[10];
+	}
+
+	// Create and fill the time matrix
+	Eigen::Matrix<Scalar, 1, degree> time;
+	for (auto i = 0; i < degree; ++i) {
+		time(0, i) = std::pow(t, i);
+	}
+
+	// Create and fill the basis matrix
+	Eigen::Matrix<Scalar, 3, 3> basis;
+	basis <<
+		0, 0, 1,
+		0, 2, 0,
+		3, 0, 0;
+
+	Eigen::Matrix<Scalar, dimension, 1> result;
+	result = time * basis * C;
+	tangent[0] = result(0, 0);
+	tangent[1] = result(1, 0);
+	if (is_3d) {
+		tangent[2] = result(2, 0);
+	}
+
+	return tangent;
+}
+
 }	// end namespace bezier
