@@ -53,11 +53,14 @@ Eigen::Matrix<Scalar, 3, 3> GetQuadraticBasis() {
 }
 
 template <typename Scalar, Dimension, Degree, typename Point>
-std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points);
+std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points, const long segment_id);
 
 template <typename Scalar, Dimension, Degree, typename Point>
 Point CalculateCoordinate(const std::vector<Point>& points, const long segment_id, const Scalar t);
 
+template <typename Scalar, Dimension dimension, Degree degree, typename Point>
+Point CalculateTangent(const std::vector<Point>& points, const long segment_id, const Scalar t);
+	
 /**	@brief	Calculate a vector of coefficients derived from a vector of control points
 *			of a cubic Bézier spline.
 *
@@ -69,13 +72,20 @@ Point CalculateCoordinate(const std::vector<Point>& points, const long segment_i
 *	@param	is_3d Boolean value to determine if 2D or 3D spline coefficients are returned.
 *	@return	A vector of coefficients calculated from the control points.
 *			Coefficients are stored in the order
-*			{\f$A_x, B_x, C_x, D_x, A_y, B_y, C_y, D_y\f$} and if the points are 3d
-*			{\f$A_z, B_z, C_z, D_z\f$}
+*			{\f$A_{(xyz)},B_{(xyz)}, C_{(xyz)}, D_{(xyz)}\f$}
 */
 
 template <typename Scalar, Dimension dimension, Degree degree, typename Point>
-std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points) {
+std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points, const long segment_id) {
+	// Determine the size of a control point set for one Bézier curve segment,
+	// then check if the input data is valid.
 	const size_t control_size = degree + 1;
+	const size_t num_segments = points.size() / control_size;	// Omits last set of control points if not a complete set.
+	std::vector<Scalar> coefficients;
+	if (num_segments == 0 || segment_id <= 0 || segment_id > num_segments) {
+		return coefficients;
+	}
+
 	// Create and fill the basis matrix
 	Eigen::Matrix<Scalar, control_size, control_size> basis;
 	switch (degree) {
@@ -89,23 +99,17 @@ std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points) {
 		break;
 	}
 
+	const size_t segment_index = (segment_id - 1) * control_size;
 	Eigen::Matrix<Scalar, control_size, dimension> P;
 	Eigen::Matrix<Scalar, control_size, dimension> result;
 	Eigen::Matrix<Scalar, dimension, control_size> output;
-	std::vector<Scalar> coefficients;
-	const size_t num_segments = points.size() / control_size;	// Omits last set of control points if not a complete set.
-	if (num_segments) {
-		for (auto i = 0; i < num_segments * control_size; i += control_size) {
-			for (auto j = 0; j < control_size; ++j) {
-				P.block<1, dimension>(j, 0) = points[i + j];
-			}
-			result = basis * P;
-			output = result.transpose();
-			for (auto p = 0; p < output.rows(); ++p) {
-				for (auto q = 0; q < output.cols(); ++q) {
-					coefficients.push_back(output(p, q));
-				}
-			}
+	for (size_t i = segment_index, j = 0; i < segment_index + control_size; ++i, ++j) {
+		P.block<1, dimension>(j, 0) = points[i];
+	}
+	result = basis * P;
+	for (auto p = 0; p < result.rows(); ++p) {
+		for (auto q = 0; q < result.cols(); ++q) {
+			coefficients.push_back(result(p, q));
 		}
 	}
 	return coefficients;
@@ -203,32 +207,31 @@ Point CalculateTangent(const std::vector<Point>& points, const long segment_id, 
 		return tangent;
 	}
 
-	// Get control points for specified segment
-	std::vector<Point> control_points;
-	const size_t segment_index = (segment_id - 1) * control_size;
-	for (auto i = segment_index; i < segment_index + control_size; ++i) {
-		control_points.push_back(points[i]);
-	}
-
 	// Get coeffecients of specified segment
 	std::vector<Scalar> coefficients;
-	coefficients = CalculateCoefficients<Scalar, dimension, degree>(control_points);
+	coefficients = CalculateCoefficients<Scalar, dimension, degree>(points, segment_id);
 
 	// Create and fill Eigen matrix with coefficients
 	Eigen::Matrix<Scalar, degree, dimension> C;
-	C(0, 0) = coefficients[0];
-	C(1, 0) = coefficients[1];
-	C(2, 0) = coefficients[2];
-	
-	C(0, 1) = coefficients[4];
-	C(1, 1) = coefficients[5];
-	C(2, 1) = coefficients[6];
-
-	if (is_3d) {
-		C(0, 2) = coefficients[8];
-		C(1, 2) = coefficients[9];
-		C(2, 2) = coefficients[10];
+	for (size_t i = 0, p = 0; p < degree; i += dimension, ++p) {
+		for (auto q = 0; q < dimension; ++q) {
+			C(p, q) = coefficients[i + q];
+		}
 	}
+	//C(0, 0) = coefficients[0];
+	//C(0, 1) = coefficients[1];
+	//
+	//C(1, 0) = coefficients[2];
+	//C(1, 1) = coefficients[3];
+	//
+	//C(2, 0) = coefficients[4];
+	//C(2, 1) = coefficients[5];
+
+	//if (is_3d) {
+	//	C(0, 2) = coefficients[6];
+	//	C(1, 2) = coefficients[7];
+	//	C(2, 2) = coefficients[8];
+	//}
 
 	// Create and fill the time matrix
 	Eigen::Matrix<Scalar, 1, degree> time;

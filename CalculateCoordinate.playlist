@@ -1,0 +1,1 @@
+<Playlist Version="1.0"><Add Test="UnitTest1::UnitTest1::Cubic2dCoordinate" /><Add Test="UnitTest1::UnitTest1::Cubic3dCoordinate" /><Add Test="UnitTest1::UnitTest1::Quad2dCoordinate" /><Add Test="UnitTest1::UnitTest1::Quad3dCoordinate" /></Playlist>

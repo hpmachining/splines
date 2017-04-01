@@ -67,7 +67,7 @@ int main(void) {
 	while (std::cin >> controlPoint.x() >> controlPoint.y()) {
 		controlPoints.push_back(controlPoint);
 	}
-	std::vector<double> coefficients = bezier::CalculateCoefficients<double, k2d, kQuadratic>(controlPoints);
+	std::vector<double> coefficients = bezier::CalculateCoefficients<double, k2d, kQuadratic>(controlPoints, 1);
 	for (auto i : coefficients) {
 		std::cout << i << '\n';
 	}

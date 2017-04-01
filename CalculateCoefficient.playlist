@@ -1,0 +1,1 @@
+<Playlist Version="1.0"><Add Test="UnitTest1::UnitTest1::Quad2dCoefficient" /><Add Test="UnitTest1::UnitTest1::Quad3dCoefficient" /><Add Test="UnitTest1::UnitTest1::Cubic2dCoefficient" /><Add Test="UnitTest1::UnitTest1::Cubic3dCoefficient" /></Playlist>
