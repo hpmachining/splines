@@ -8,8 +8,8 @@ A collection of templated functions for working with Quadratic and Cubic Bézier 
 
 #pragma once
 
-#include <vector>
 #include <cmath>
+#include <vector>
 #include <iostream>
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
@@ -46,6 +46,10 @@ Point CalculateCoordinate(const std::vector<Point>& points, const size_t segment
 
 template <typename Scalar, Dimension, Degree, typename Point>
 Point CalculateTangent(const std::vector<Point>& points, const size_t segment_id, const Scalar t);
+
+template <typename Scalar, Dimension, Degree, typename Point>
+Point CalculateNormal(const std::vector<Point>& points, const size_t segment_id, const Scalar t);
+
 
 /** 
 @return	A 4 x 4 Eigen::Matrix used for cubic curve calculations
@@ -270,6 +274,63 @@ Point CalculateTangent(const std::vector<Point>& points, const size_t segment_id
 	tangent << result;
 
 	return tangent;
+}
+
+template <typename Scalar, Dimension dimension, Degree degree, typename Point>
+Point CalculateNormal(const std::vector<Point>& points, const size_t segment_id, const Scalar t) {
+	// Determine the size of a control point set for one Bézier curve segment, then check if the
+	// input data is valid.
+	const size_t control_size = degree + 1;
+	// Omits last set of control points if not a complete set.
+	const size_t num_segments = points.size() / control_size;
+	Point normal;
+	if (num_segments == 0 || segment_id < 1 || segment_id > num_segments) {
+		return normal;
+	}
+
+	// Get tangent of curve at specified t parameter
+	Point tangent = CalculateTangent<Scalar, dimension, degree>(points, segment_id, t);
+
+	// Get coeffecients of specified segment
+	std::vector<Scalar> coefficients;
+	coefficients = CalculateCoefficients<Scalar, dimension, degree>(points, segment_id);
+
+
+	// Create and fill Eigen matrix with coefficients
+	Eigen::Matrix<Scalar, degree - 1, dimension> C;
+	for (size_t i = 0, p = 0; p < degree - 1; i += dimension, ++p) {
+		for (size_t q = 0; q < dimension; ++q) {
+			C(p, q) = coefficients[i + q];
+		}
+	}
+
+	// Create and fill the parameter matrix
+	Eigen::Matrix<Scalar, 1, degree -1> parameter;
+	for (size_t i = 0; i < degree - 1; ++i) {
+		parameter(0, i) = std::pow(t, i);
+	}
+
+	// Create rotatiion matrix
+	//Eigen::Transform<Scalar, dimension, Eigen::Affine> transform;
+	//transform.setIdentity();
+	//Eigen::Matrix<Scalar, dimension, 1> position = tangent;
+	Eigen::Matrix<Scalar, degree -1, degree - 1> basis;
+	switch (degree) {
+	case kCubic:
+		basis <<
+			0, 2,
+			6, 0;
+		//transform.rotate(Eigen::AngleAxis<Scalar>(.5 * M_PI, Eigen::Matrix<Scalar, dimension, 1>::UnitZ()));
+		//normal = transform * tangent;
+		break;
+	case kQuadratic:
+		break;
+	}
+
+	Eigen::Matrix<Scalar, dimension, 1> result;
+	result = parameter * basis * C;
+	normal << result;
+	return normal;
 }
 
 }	// end namespace bezier

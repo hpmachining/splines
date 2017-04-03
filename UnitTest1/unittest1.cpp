@@ -1,4 +1,7 @@
+#define _USE_MATH_DEFINES
+
 #include "stdafx.h"
+#include <cmath>
 #include "CppUnitTest.h"
 #include "splines.h"
 #include <iostream>
@@ -278,9 +281,11 @@ namespace UnitTest1
 
 			Eigen::Vector3d coordinate;
 			Eigen::Vector3d tangent;
+			Eigen::Vector3d normal;
 			Eigen::Vector3d empty;
 			empty << max_double, max_double, max_double;
 			coordinate = empty;
+			normal = empty;
 			tangent = empty;
 			out_file << std::fixed << std::setprecision(14);
 			for (size_t i = 1; i <= control_points.size() / 4; ++i) {
@@ -292,6 +297,11 @@ namespace UnitTest1
 				tangent.normalize();
 				tangent += coordinate;
 				out_file << tangent.transpose() << '\n';
+				normal = bezier::CalculateNormal<double, bezier::k3d, bezier::kCubic>(control_points, i, .5);
+				Assert::IsFalse(normal == empty);
+				normal.normalize();
+				normal += coordinate;
+				out_file << normal.transpose() << '\n';
 				coordinate = empty;
 				tangent = empty;
 			}

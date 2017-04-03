@@ -129,14 +129,19 @@ int main(void) {
 	//}
 	Eigen::Vector3d coordinate;
 	Eigen::Vector3d tangent;
+	Eigen::Vector3d normal;
 	std::cout << std::fixed << std::setprecision(14);
 	for (auto i = 1; i <= control_points.size() / 4; ++i) {
 		coordinate = bezier::CalculateCoordinate<double, bezier::k3d, bezier::kCubic>(control_points, i, .5);
 		std::cout << coordinate.transpose() << '\n';
-		//tangent = bezier::CalculateTangent<double, bezier::k3d, bezier::kCubic>(control_points, i, .5);
-		//tangent.normalize();
-		//tangent += coordinate;
-		//std::cout << tangent.transpose() << '\n';
+		tangent = bezier::CalculateTangent<double, bezier::k3d, bezier::kCubic>(control_points, i, .5);
+		tangent.normalize();
+		tangent += coordinate;
+		std::cout << tangent.transpose() << '\n';
+		normal = bezier::CalculateNormal<double, bezier::k3d, bezier::kCubic>(control_points, i, .5);
+		normal.normalize();
+		normal += coordinate;
+		std::cout << normal.transpose() << '\n';
 	}
 
 	return 0;
