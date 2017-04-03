@@ -5,6 +5,7 @@
 #include <cmath>
 #include <vector>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 #include <string>
 #include <algorithm>
@@ -62,15 +63,15 @@ int main(void) {
 	//	std::cout << i << '\n';
 	//}
 
-	Eigen::Vector2d controlPoint;
-	std::vector<Eigen::Vector2d> controlPoints;
-	while (std::cin >> controlPoint.x() >> controlPoint.y()) {
-		controlPoints.push_back(controlPoint);
-	}
-	std::vector<double> coefficients = bezier::CalculateCoefficients<double, k2d, kQuadratic>(controlPoints, 1);
-	for (auto i : coefficients) {
-		std::cout << i << '\n';
-	}
+	//Eigen::Vector2d controlPoint;
+	//std::vector<Eigen::Vector2d> controlPoints;
+	//while (std::cin >> controlPoint.x() >> controlPoint.y()) {
+	//	controlPoints.push_back(controlPoint);
+	//}
+	//std::vector<double> coefficients = bezier::CalculateCoefficients<double, k2d, kQuadratic>(controlPoints, 1);
+	//for (auto i : coefficients) {
+	//	std::cout << i << '\n';
+	//}
 
 	//// Routine for eliminating duplicate points to make b-spline control points
 	//auto uniqueEnd = std::unique(controlPoints.begin(), controlPoints.end(),
@@ -108,6 +109,35 @@ int main(void) {
 	//	coordinate = bezier::CalculateCoordinate<double, k3d, kCubic>(controlPoints, i, .75);
 	//	std::cout << coordinate.transpose() << '\n';
 	//}
+
+	using Point = Eigen::Vector3d;
+	Point control_point;
+	std::vector<Point> control_points;
+	Eigen::Matrix3Xd C;
+	size_t col = 0;
+	while (std::cin >> control_point.x() >> control_point.y() >> control_point.z()) {
+		C.conservativeResize(Eigen::NoChange, col + 1);
+		control_points.push_back(control_point);
+		C.block(0, col, 3, 1) = control_point;
+		++col;
+	}
+	size_t columns = C.cols();
+	std::cout << std::fixed << std::setprecision(6);
+	std::cout << C.transpose() << '\n';
+	//for (auto i : control_points) {
+	//	std::cout << i.transpose() << '\n';
+	//}
+	Eigen::Vector3d coordinate;
+	Eigen::Vector3d tangent;
+	std::cout << std::fixed << std::setprecision(14);
+	for (auto i = 1; i <= control_points.size() / 4; ++i) {
+		coordinate = bezier::CalculateCoordinate<double, bezier::k3d, bezier::kCubic>(control_points, i, .5);
+		std::cout << coordinate.transpose() << '\n';
+		//tangent = bezier::CalculateTangent<double, bezier::k3d, bezier::kCubic>(control_points, i, .5);
+		//tangent.normalize();
+		//tangent += coordinate;
+		//std::cout << tangent.transpose() << '\n';
+	}
 
 	return 0;
 }

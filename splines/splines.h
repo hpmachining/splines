@@ -1,7 +1,9 @@
-/** @mainpage
-* @author Paul J. Hentschel
-*
-* A collection of templated functions for working with Cubic Bézier curves.
+/**
+@mainpage
+A collection of templated functions for working with Quadratic and Cubic Bézier curves.
+
+
+
 */
 
 #pragma once
@@ -9,7 +11,6 @@
 #include <vector>
 #include <cmath>
 #include <iostream>
-#include <array>
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
 
@@ -32,6 +33,24 @@ enum Dimension {
 };
 
 template <typename Scalar>
+Eigen::Matrix<Scalar, 4, 4> GetCubicBasis();
+
+template <typename Scalar>
+Eigen::Matrix<Scalar, 3, 3> GetQuadraticBasis();
+
+template <typename Scalar, Dimension, Degree, typename Point>
+std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points, const size_t segment_id);
+
+template <typename Scalar, Dimension, Degree, typename Point>
+Point CalculateCoordinate(const std::vector<Point>& points, const size_t segment_id, const Scalar t);
+
+template <typename Scalar, Dimension, Degree, typename Point>
+Point CalculateTangent(const std::vector<Point>& points, const size_t segment_id, const Scalar t);
+
+/** 
+@return	A 4 x 4 Eigen::Matrix used for cubic curve calculations
+*/
+template <typename Scalar>
 Eigen::Matrix<Scalar, 4, 4> GetCubicBasis() {
 	Eigen::Matrix<Scalar, 4, 4> basis;
 	basis <<
@@ -42,6 +61,9 @@ Eigen::Matrix<Scalar, 4, 4> GetCubicBasis() {
 	return basis;
 }
 
+/**
+@return	A 3 x 3 Eigen::Matrix used for quadratic curve calculations
+*/
 template <typename Scalar>
 Eigen::Matrix<Scalar, 3, 3> GetQuadraticBasis() {
 	Eigen::Matrix<Scalar, 3, 3> basis;
@@ -52,37 +74,35 @@ Eigen::Matrix<Scalar, 3, 3> GetQuadraticBasis() {
 	return basis;
 }
 
-template <typename Scalar, Dimension, Degree, typename Point>
-std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points, const long segment_id);
+/**	
+@brief	Calculate the coefficients derived from a segment of a composite Bézier curve.
 
-template <typename Scalar, Dimension, Degree, typename Point>
-Point CalculateCoordinate(const std::vector<Point>& points, const long segment_id, const Scalar t);
+		This function takes a set of 2d or 3d control points and a segment number of a 
+		quadratic or cubic composite Bézier curve and returns the coefficients.
+		Control point sets must be in multiples of \f$degree + 1\f$.
 
-template <typename Scalar, Dimension dimension, Degree degree, typename Point>
-Point CalculateTangent(const std::vector<Point>& points, const long segment_id, const Scalar t);
-	
-/**	@brief	Calculate a vector of coefficients derived from a vector of control points
-*			of a cubic Bézier spline.
-*
-*			Size of vector of control points must be in multiples of 4.
-*
-*	@param	degree Degree of the Bézier curve. Currently supports Quadratic(2) and Cubic(3) curves.
-*	@param	points Vector of control points. This function will process the vector elements
-*			in groups of 4.
-*	@param	is_3d Boolean value to determine if 2D or 3D spline coefficients are returned.
-*	@return	A vector of coefficients calculated from the control points.
-*			Coefficients are stored in the order
-*			{\f$A_{(xyz)},B_{(xyz)}, C_{(xyz)}, D_{(xyz)}\f$}
+@tparam Scalar Type of data being passed in. Valid types are float and double.
+@tparam dimension Dimension of control point coordinates.
+		Valid options are bezier::k2d or bezier::k3d
+@tparam	degree Degree of the Bézier curve.
+		Valid options are bezier::kQuadratic and bezier::kCubic.
+@tparam Point Container type for the points. Must have [] accessor. [0] = x, [1] = y, and if 3d, [2] = z.
+@param	points Control points. Number of control points for each segment must be \f$degree + 1\f$
+@param	segment_id Indicates which segment of the composite Bézier curve to process. Numbering
+		starts at 1.
+@return	Coefficients calculated from the control points. Coefficients are stored in the order
+		\f${A_{x,y,(z)},B_{x,y,(z)}, C_{x,y,(z)}, D_{x,y,(z)}}\f$. 3d curves will have 12
+		coefficients and 2d curves will have 8.
 */
-
 template <typename Scalar, Dimension dimension, Degree degree, typename Point>
-std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points, const long segment_id) {
+std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points, const size_t segment_id) {
 	// Determine the size of a control point set for one Bézier curve segment,
 	// then check if the input data is valid.
 	const size_t control_size = degree + 1;
-	const size_t num_segments = points.size() / control_size;	// Omits last set of control points if not a complete set.
+	// Omits the last set of control points if not a complete set.
+	const size_t num_segments = points.size() / control_size;	 
 	std::vector<Scalar> coefficients;
-	if (num_segments == 0 || segment_id <= 0 || segment_id > num_segments) {
+	if (num_segments == 0 || segment_id < 1 || segment_id > num_segments) {
 		return coefficients;
 	}
 
@@ -99,77 +119,68 @@ std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points, cons
 		break;
 	}
 
+	// Create and fill Eigen::Matrix with control points for specified segment
 	const size_t segment_index = (segment_id - 1) * control_size;
-	Eigen::Matrix<Scalar, control_size, dimension> P;
-	Eigen::Matrix<Scalar, control_size, dimension> result;
-	Eigen::Matrix<Scalar, dimension, control_size> output;
+	Eigen::Matrix<Scalar, control_size, dimension> control_points;
 	for (size_t i = segment_index, j = 0; i < segment_index + control_size; ++i, ++j) {
-		P.block<1, dimension>(j, 0) = points[i];
+		control_points.block<1, dimension>(j, 0) = points[i];
 	}
-	result = basis * P;
+
+	// Calculate the coefficients
+	Eigen::Matrix<Scalar, control_size, dimension> result;
+	result = basis * control_points;
 	for (auto p = 0; p < result.rows(); ++p) {
 		for (auto q = 0; q < result.cols(); ++q) {
 			coefficients.push_back(result(p, q));
 		}
 	}
+
 	return coefficients;
 }
 
+/**	
+@brief	Calculate a position on a segment of a composite Bézier curve.
 
-/**	@brief	Calculate a position on a Quadratic or Cubic Bézier curve segment
-			using matrices
+		This function calculates the coordinate at parameter \f$t\f$ on a quadratic or cubic
+		Bézier curve segment. It is an implementation of the equations
+		\f$B(t) = (1-t)^3P_0 + 3(1-t)^2tP_1 + 3(1-t)t^2P_2 + t^3P_3,\; 0 \le t \le 1\f$ for cubic 
+		curves and \f$B(t) = (1-t)^2P_0 + 2(1-t)tP_1 + t^2P_2,\; 0 \le t \le 1\f$ for quadratic 
+		curves.
 
-	@tparam Scalar Type of data being passed in. Valid types are float and double.
-	@tparam Dimension Dimension of control point coordinates.
-			Valid options are bezier::k2d \f$(x, y)\f$ or bezier::k3d \f$(x, y, z)\f$
-	@tparam	Degree Degree of the Bézier curve. 
-			Valid options are bezier::kQuadratic (2) and bezier::kCubic (3).
-	@tparam Point Container type for the points. Must have [] accessor. [0] = x coordinate,
-			[1] = y coordinate and if 3d, [2] = z coordinate.
-	@param	segment_id Segment number to use for calculation.
-	@param	t Time parameter in the interval \f$t \in [0,1]\f$ for a point on the curve segemnt.
-			Values outside of this range may be used to calculate a coordinate on a natural
-			extension of the curve.
-	@param	points std::vector of control points. Number of control points 
-			for each segment must be \f$ (degree + 1) \f$
-	@return	A vector of coordinates of type \<**Point**\> for the calculated position.
+@tparam Scalar Type of data being passed in. Valid types are float and double.
+@tparam Dimension Dimension of control point coordinates. Valid options are bezier::k2d or bezier::k3d
+@tparam	Degree Degree of the Bézier curve. Valid options are bezier::kQuadratic and bezier::kCubic.
+@tparam Point Container type for the points. Must have [] accessor. [0] = x, [1] = y, and if 3d, [2] = z.
+@param	segment_id Segment number to use for calculation.
+@param	t Parameter in the range \f$0 \le t \le 1\f$ for a point on the curve segment. Values
+		outside of this range may be used to calculate a coordinate on a natural extension of the 
+		curve segment.
+@param	points Control points. Number of control points for each segment must be \f$degree + 1\f$
+@return	Coordinate of type *Point* for the calculated position.
 */
-
 template <typename Scalar, Dimension dimension, Degree degree, typename Point>
-Point CalculateCoordinate(const std::vector<Point>& points, const long segment_id, const Scalar t) {
-	using Eigen::Dynamic;
-	const bool is_3d = (dimension == k3d);
-
-	// Determine the size of a control point set for one Bézier curve segment,
-	// then check if the input data is valid.
+Point CalculateCoordinate(const std::vector<Point>& points, const size_t segment_id, const Scalar t) {
+	// Determine the size of a control point set for one Bézier curve segment, then check if the
+	// input data is valid.
 	const size_t control_size = degree + 1;
-	const size_t num_segments = points.size() / control_size;	// Omits last set of control points if not a complete set.
+	// Omits last set of control points if not a complete set.
+	const size_t num_segments = points.size() / control_size;
 	Point coordinate;
-	if (num_segments == 0 || segment_id <= 0 || segment_id > num_segments) {
+	if (num_segments == 0 || segment_id < 1 || segment_id > num_segments) {
 		return coordinate;
 	}
 
 	// Create and fill Eigen::Matrix with control points for specified segment
 	const size_t segment_index = (segment_id - 1) * control_size;
 	Eigen::Matrix<Scalar, control_size, dimension> control_points;
-	if (is_3d) {
-		for (size_t i = 0, p = segment_index; p < segment_index + control_size; ++i, ++p) {
-			control_points(i, 0) = points[p][0];
-			control_points(i, 1) = points[p][1];
-			control_points(i, 2) = points[p][2];
-		}
-	}
-	else {
-		for (size_t i = 0, p = segment_index; p < segment_index + control_size; ++i, ++p) {
-			control_points(i, 0) = points[p][0];
-			control_points(i, 1) = points[p][1];
-		}
+	for (size_t i = segment_index, j = 0; i < segment_index + control_size; ++i, ++j) {
+		control_points.block<1, dimension>(j, 0) = points[i];
 	}
 	
-	// Create and fill the time matrix
-	Eigen::Matrix<Scalar, 1, control_size> time;
-	for (auto i = 0; i < control_size; ++i) {
-		time(0, i) = std::pow(t, i);
+	// Create and fill the t parameter matrix
+	Eigen::Matrix<Scalar, 1, control_size> parameter;
+	for (size_t i = 0; i < control_size; ++i) {
+		parameter(0, i) = std::pow(t, i);
 	}
 	
 	// Create and fill the basis matrix
@@ -185,25 +196,38 @@ Point CalculateCoordinate(const std::vector<Point>& points, const long segment_i
 
 	// Calculate the coordinate
 	Eigen::Matrix<Scalar, dimension, 1> result;
-	result = time * basis * control_points;
-	coordinate[0] = result(0, 0);
-	coordinate[1] = result(1, 0);
-	if (is_3d) {
-		coordinate[2] = result(2, 0);
-	}
+	result = parameter * basis * control_points;
+	coordinate << result;
+
 	return coordinate;
 }
 
-template <typename Scalar, Dimension dimension, Degree degree, typename Point>
-Point CalculateTangent(const std::vector<Point>& points, const long segment_id, const Scalar t) {
-	bool is_3d = (dimension == k3d);
+/**
+@brief	Calculate a tangent vector on a segment of a composite Bézier curve.
 
-	// Determine the size of a control point set for one Bézier curve segment,
-	// then check if the input data is valid.
+		This function calculates the tangent vector at parameter \f$t\f$ on a quadratic or cubic
+		Bézier curve segment.
+
+@tparam Scalar Type of data being passed in. Valid types are float and double.
+@tparam Dimension Dimension of control point coordinates. Valid options are bezier::k2d or bezier::k3d
+@tparam	Degree Degree of the Bézier curve. Valid options are bezier::kQuadratic and bezier::kCubic.
+@tparam Point Container type for the points. Must have [] accessor. [0] = x, [1] = y and if 3d, [2] = z.
+@param	segment_id Segment number to use for calculation.
+@param	t Parameter in the range \f$0 \le t \le 1\f$ for a point on the curve segment. Values 
+		outside of this range may be used to calculate a coordinate on a natural extension of the 
+		curve segment.
+@param	points Control points. Number of control points for each segment must be \f$degree + 1\f$
+@return	Coordinate of type *Point* for the calculated tangent vector.
+*/
+template <typename Scalar, Dimension dimension, Degree degree, typename Point>
+Point CalculateTangent(const std::vector<Point>& points, const size_t segment_id, const Scalar t) {
+	// Determine the size of a control point set for one Bézier curve segment, then check if the
+	// input data is valid.
 	const size_t control_size = degree + 1;
-	const size_t num_segments = points.size() / control_size;	// Omits last set of control points if not a complete set.
+	// Omits last set of control points if not a complete set.
+	const size_t num_segments = points.size() / control_size;
 	Point tangent;
-	if (num_segments == 0 || segment_id <= 0 || segment_id > num_segments) {
+	if (num_segments == 0 || segment_id < 1 || segment_id > num_segments) {
 		return tangent;
 	}
 
@@ -214,45 +238,36 @@ Point CalculateTangent(const std::vector<Point>& points, const long segment_id, 
 	// Create and fill Eigen matrix with coefficients
 	Eigen::Matrix<Scalar, degree, dimension> C;
 	for (size_t i = 0, p = 0; p < degree; i += dimension, ++p) {
-		for (auto q = 0; q < dimension; ++q) {
+		for (size_t q = 0; q < dimension; ++q) {
 			C(p, q) = coefficients[i + q];
 		}
 	}
-	//C(0, 0) = coefficients[0];
-	//C(0, 1) = coefficients[1];
-	//
-	//C(1, 0) = coefficients[2];
-	//C(1, 1) = coefficients[3];
-	//
-	//C(2, 0) = coefficients[4];
-	//C(2, 1) = coefficients[5];
 
-	//if (is_3d) {
-	//	C(0, 2) = coefficients[6];
-	//	C(1, 2) = coefficients[7];
-	//	C(2, 2) = coefficients[8];
-	//}
-
-	// Create and fill the time matrix
-	Eigen::Matrix<Scalar, 1, degree> time;
-	for (auto i = 0; i < degree; ++i) {
-		time(0, i) = std::pow(t, i);
+	// Create and fill the parameter matrix
+	Eigen::Matrix<Scalar, 1, degree> parameter;
+	for (size_t i = 0; i < degree; ++i) {
+		parameter(0, i) = std::pow(t, i);
 	}
 
 	// Create and fill the basis matrix
-	Eigen::Matrix<Scalar, 3, 3> basis;
-	basis <<
-		0, 0, 1,
-		0, 2, 0,
-		3, 0, 0;
+	Eigen::Matrix<Scalar, degree, degree> basis;
+	switch (degree) {
+	case kCubic:
+		basis <<
+			0, 0, 1,
+			0, 2, 0,
+			3, 0, 0;
+		break;
+	case kQuadratic:
+		basis <<
+			0, 1,
+			2, 0;
+		break;
+	}
 
 	Eigen::Matrix<Scalar, dimension, 1> result;
-	result = time * basis * C;
-	tangent[0] = result(0, 0);
-	tangent[1] = result(1, 0);
-	if (is_3d) {
-		tangent[2] = result(2, 0);
-	}
+	result = parameter * basis * C;
+	tangent << result;
 
 	return tangent;
 }
