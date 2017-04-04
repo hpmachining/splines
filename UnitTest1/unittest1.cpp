@@ -268,7 +268,7 @@ namespace UnitTest1
 
 		TEST_METHOD(Cubic3dTangent)
 		{
-			std::ifstream in_file("cubic3d.dat");
+			std::ifstream in_file("cubic.dat");
 			Assert::IsTrue(in_file.is_open());
 			std::ofstream out_file("cubic3dtan.points");
 			Eigen::Vector3d control_point;

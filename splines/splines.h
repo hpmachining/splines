@@ -289,7 +289,8 @@ Point CalculateNormal(const std::vector<Point>& points, const size_t segment_id,
 	}
 
 	// Get coordinate and tangent of curve at specified t parameter
-	Scalar next_t = t + .0001;
+	//Scalar next_t = t + .0001;
+	Scalar next_t = t - .0001;
 	Point coord_1 = CalculateCoordinate<Scalar, dimension, degree>(points, segment_id, t);
 	Point coord_2 = CalculateCoordinate<Scalar, dimension, degree>(points, segment_id, next_t);
 	Point tan_1 = CalculateTangent<Scalar, dimension, degree>(points, segment_id, t);
@@ -305,7 +306,8 @@ Point CalculateNormal(const std::vector<Point>& points, const size_t segment_id,
 	next_tangent += offset;
 	tangent.normalize();
 	next_tangent.normalize();
-	Eigen::Matrix<Scalar, dimension, 1> z_axis = next_tangent.cross(tangent);
+	//Eigen::Matrix<Scalar, dimension, 1> z_axis = next_tangent.cross(tangent);
+	Eigen::Matrix<Scalar, dimension, 1> z_axis = tangent.cross(next_tangent);
 	
 	// Create rotation matrix
 	Eigen::Transform<Scalar, dimension, Eigen::Affine> transform;
