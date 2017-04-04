@@ -288,48 +288,41 @@ Point CalculateNormal(const std::vector<Point>& points, const size_t segment_id,
 		return normal;
 	}
 
-	// Get tangent of curve at specified t parameter
-	Point tangent = CalculateTangent<Scalar, dimension, degree>(points, segment_id, t);
+	// Get coordinate and tangent of curve at specified t parameter
+	Scalar next_t = t + .0001;
+	Point coord_1 = CalculateCoordinate<Scalar, dimension, degree>(points, segment_id, t);
+	Point coord_2 = CalculateCoordinate<Scalar, dimension, degree>(points, segment_id, next_t);
+	Point tan_1 = CalculateTangent<Scalar, dimension, degree>(points, segment_id, t);
+	Point tan_2 = CalculateTangent<Scalar, dimension, degree>(points, segment_id, next_t);
 
-	// Get coeffecients of specified segment
-	std::vector<Scalar> coefficients;
-	coefficients = CalculateCoefficients<Scalar, dimension, degree>(points, segment_id);
+	// Copy to Eigen matrices
+	Eigen::Matrix<Scalar, dimension, 1> tangent;
+	Eigen::Matrix<Scalar, dimension, 1> next_tangent;
 
+	tangent << tan_1;
+	next_tangent << tan_2;
+	Eigen::Matrix<Scalar, dimension, 1> offset = coord_1 - coord_2;
+	next_tangent += offset;
+	tangent.normalize();
+	next_tangent.normalize();
+	Eigen::Matrix<Scalar, dimension, 1> z_axis = next_tangent.cross(tangent);
+	
+	// Create rotation matrix
+	Eigen::Transform<Scalar, dimension, Eigen::Affine> transform;
+	transform.setIdentity();
+	Eigen::AngleAxis<Scalar> rotation(M_PI_2, z_axis);
+	transform.rotate(rotation);
+	normal = transform * tangent;
+	normal.normalize();
+	//switch (degree) {
+	//case kCubic:
+	//	//transform.rotate(Eigen::AngleAxis<Scalar>(.5 * M_PI, Eigen::Matrix<Scalar, dimension, 1>::UnitZ()));
+	//	//normal = transform * tangent;
+	//	break;
+	//case kQuadratic:
+	//	break;
+	//}
 
-	// Create and fill Eigen matrix with coefficients
-	Eigen::Matrix<Scalar, degree - 1, dimension> C;
-	for (size_t i = 0, p = 0; p < degree - 1; i += dimension, ++p) {
-		for (size_t q = 0; q < dimension; ++q) {
-			C(p, q) = coefficients[i + q];
-		}
-	}
-
-	// Create and fill the parameter matrix
-	Eigen::Matrix<Scalar, 1, degree -1> parameter;
-	for (size_t i = 0; i < degree - 1; ++i) {
-		parameter(0, i) = std::pow(t, i);
-	}
-
-	// Create rotatiion matrix
-	//Eigen::Transform<Scalar, dimension, Eigen::Affine> transform;
-	//transform.setIdentity();
-	//Eigen::Matrix<Scalar, dimension, 1> position = tangent;
-	Eigen::Matrix<Scalar, degree -1, degree - 1> basis;
-	switch (degree) {
-	case kCubic:
-		basis <<
-			0, 2,
-			6, 0;
-		//transform.rotate(Eigen::AngleAxis<Scalar>(.5 * M_PI, Eigen::Matrix<Scalar, dimension, 1>::UnitZ()));
-		//normal = transform * tangent;
-		break;
-	case kQuadratic:
-		break;
-	}
-
-	Eigen::Matrix<Scalar, dimension, 1> result;
-	result = parameter * basis * C;
-	normal << result;
 	return normal;
 }
 

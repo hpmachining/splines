@@ -1,7 +1,5 @@
-#define _USE_MATH_DEFINES
 
 #include "stdafx.h"
-#include <cmath>
 #include "CppUnitTest.h"
 #include "splines.h"
 #include <iostream>
@@ -320,20 +318,67 @@ namespace UnitTest1
 
 			Eigen::Vector2d coordinate;
 			Eigen::Vector2d tangent;
+			Eigen::Vector2d normal;
 			Eigen::Vector2d empty;
 			empty << max_double, max_double;
 			coordinate = empty;
 			tangent = empty;
+			normal = empty;
 			out_file << std::fixed << std::setprecision(14);
 			for (size_t i = 1; i <= control_points.size() / 3; ++i) {
-				coordinate = bezier::CalculateCoordinate<double, bezier::k2d, bezier::kQuadratic>(control_points, i, .25);
+				coordinate = bezier::CalculateCoordinate<double, bezier::k2d, bezier::kQuadratic>(control_points, i, .5);
 				Assert::IsFalse(coordinate == empty);
 				out_file << coordinate.transpose() << '\n';
-				tangent = bezier::CalculateTangent<double, bezier::k2d, bezier::kQuadratic>(control_points, i, .25);
+				tangent = bezier::CalculateTangent<double, bezier::k2d, bezier::kQuadratic>(control_points, i, .5);
 				Assert::IsFalse(tangent == empty);
 				tangent.normalize();
 				tangent += coordinate;
 				out_file << tangent.transpose() << '\n';
+				//normal = bezier::CalculateNormal<double, bezier::k2d, bezier::kQuadratic>(control_points, i, .5);
+				//Assert::IsFalse(normal == empty);
+				//normal.normalize();
+				//normal += coordinate;
+				//out_file << normal.transpose() << '\n';
+				coordinate = empty;
+				tangent = empty;
+			}
+		}
+
+		TEST_METHOD(Quad3dTangent)
+		{
+			using Point = Eigen::Vector3d;
+			std::ifstream in_file("quad3d.dat");
+			Assert::IsTrue(in_file.is_open());
+			std::ofstream out_file("quad3dtan.points");
+			Point control_point;
+			std::vector<Point> control_points;
+			while (in_file >> control_point.x() >> control_point.y() >> control_point.z()) {
+				control_points.push_back(control_point);
+			}
+
+			Point coordinate;
+			Point tangent;
+			Point normal;
+			Point empty;
+			empty << max_double, max_double, max_double;
+			coordinate = empty;
+			tangent = empty;
+			normal = empty;
+			out_file << std::fixed << std::setprecision(14);
+			for (size_t i = 1; i <= control_points.size() / 3; ++i) {
+				coordinate = bezier::CalculateCoordinate<double, bezier::k3d, bezier::kQuadratic>(control_points, i, .75);
+				Assert::IsFalse(coordinate == empty);
+				out_file << coordinate.transpose() << '\n';
+				tangent = bezier::CalculateTangent<double, bezier::k3d, bezier::kQuadratic>(control_points, i, .75);
+				Assert::IsFalse(tangent == empty);
+				tangent.normalize();
+				tangent += coordinate;
+				out_file << tangent.transpose() << '\n';
+				normal = bezier::CalculateNormal<double, bezier::k3d, bezier::kQuadratic>(control_points, i, .75);
+				Assert::IsFalse(normal == empty);
+				normal.normalize();
+				normal += coordinate;
+				out_file << normal.transpose() << '\n';
 				coordinate = empty;
 				tangent = empty;
 			}
