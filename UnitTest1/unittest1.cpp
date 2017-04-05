@@ -17,6 +17,7 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 namespace UnitTest1
 {		
 	TEST_CLASS(UnitTest1)
+
 	{
 	public:
 		double max_double = std::numeric_limits<double>::max();
@@ -398,6 +399,69 @@ namespace UnitTest1
 				out_file << normal.transpose() << '\n';
 				coordinate = empty;
 				tangent = empty;
+			}
+		}
+
+		TEST_METHOD(Quartic3dTangent)
+		{
+			using Point = Eigen::Vector3d;
+			//using Point = std::array<double, 3>;
+			std::ifstream in_file("quartic3d.dat");
+			Assert::IsTrue(in_file.is_open());
+			std::ofstream out_file("quartic3dtan.points");
+			Point control_point;
+			std::vector<Point> control_points;
+			//while (in_file >> control_point.x() >> control_point.y() >> control_point.z()) {
+			//	control_points.push_back(control_point);
+			//}
+			while (in_file >> control_point[0] >> control_point[1] >> control_point[2]) {
+				control_points.push_back(control_point);
+			}
+
+			Point coordinate;
+			Point tangent;
+			Point normal;
+			Point empty;
+			//empty << max_double, max_double, max_double;
+			for (size_t i = 0; i < 3; ++i) {
+				empty[i] = max_double;
+			}
+			coordinate = empty;
+			normal = empty;
+			tangent = empty;
+			out_file << std::fixed << std::setprecision(14);
+			for (size_t i = 1; i <= control_points.size() / 4; ++i) {
+				coordinate = bezier::CalculateCoordinate<double, bezier::k3d, bezier::kQuartic>(control_points, i, .5);
+				Assert::IsFalse(coordinate == empty);
+				Eigen::Vector3d eigen_coordinate;
+				eigen_coordinate << coordinate[0], coordinate[1], coordinate[2];
+				out_file << eigen_coordinate.transpose() << '\n';
+				//out_file << coordinate[0] << ' ' << coordinate[1] << ' ' << coordinate[2] << '\n';
+				tangent = bezier::CalculateTangent<double, bezier::k3d, bezier::kQuartic>(control_points, i, .5);
+				Assert::IsFalse(tangent == empty);
+				Eigen::Vector3d normal_tangent;
+				normal_tangent << tangent[0], tangent[1], tangent[2];
+				normal_tangent.normalize();
+				normal_tangent += eigen_coordinate;
+				out_file << normal_tangent.transpose() << '\n';
+				normal = bezier::CalculateNormal<double, bezier::k3d, bezier::kQuartic>(control_points, i, .5);
+				Assert::IsFalse(normal == empty);
+				Eigen::Vector3d eigen_normal;
+				eigen_normal << normal[0], normal[1], normal[2];
+				eigen_normal.normalize();
+				eigen_normal += eigen_coordinate;
+				out_file << eigen_normal.transpose() << '\n';
+				coordinate = empty;
+				tangent = empty;
+			}
+		}
+
+		TEST_METHOD(PascalRow) {
+			std::ofstream out_file("pascalRow.dat");
+			out_file << std::fixed << std::setprecision(0);
+			for (int row = 0; row < 100; ++row) {
+				Eigen::Matrix<double, Eigen::Dynamic, 1> pascal_row = bezier::GetPascalRow(row);
+				out_file << pascal_row.transpose() << '\n';
 			}
 		}
 

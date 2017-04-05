@@ -22,6 +22,10 @@ enum Degree {
 	kQuadratic = 2,
 	/** Degree = 3 */
 	kCubic,
+	/** Degree = 4 */
+	kQuartic,
+	/** Degree = 5 */
+	kQuintic,
 };
 
 /** Specifies the coordinate dimension */
@@ -29,14 +33,16 @@ enum Dimension {
 	/** 2d coordinates \f$(x, y)\f$ */
 	k2d = 2,
 	/** 3d coordinates \f$(x, y, z)\f$ */
-	k3d,
+	k3d
 };
 
-template <typename Scalar>
-Eigen::Matrix<Scalar, 4, 4> GetCubicBasis();
+template <typename Scalar, Degree degree>
+Eigen::Matrix<Scalar, degree + 1, degree + 1> GetPowerCoefficients();
 
-template <typename Scalar>
-Eigen::Matrix<Scalar, 3, 3> GetQuadraticBasis();
+template <typename Scalar, Degree degree>
+Eigen::Matrix<Scalar, degree, degree> GetTangentCoefficients();
+
+Eigen::Matrix<double, Eigen::Dynamic, 1> GetPascalRow(int row);
 
 template <typename Scalar, Dimension, Degree, typename Point>
 std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points, const size_t segment_id);
@@ -50,35 +56,72 @@ Point CalculateTangent(const std::vector<Point>& points, const size_t segment_id
 template <typename Scalar, Dimension, Degree, typename Point>
 Point CalculateNormal(const std::vector<Point>& points, const size_t segment_id, const Scalar t);
 
-
-/** 
-@return	A 4 x 4 matrix of the coefficients of the cubic power basis.
-*/
-template <typename Scalar>
-Eigen::Matrix<Scalar, 4, 4> GetCubicBasis() {
-	Eigen::Matrix<Scalar, 4, 4> basis;
-	basis <<
-		1, 0, 0, 0,
-		-3, 3, 0, 0,
-		3, -6, 3, 0,
-		-1, 3, -3, 1;
+template <typename Scalar, Degree degree>
+Eigen::Matrix<Scalar, degree + 1, degree + 1> GetPowerCoefficients() {
+	Eigen::Matrix<Scalar, degree + 1, degree + 1> basis;
+	switch (degree) {
+	case kQuadratic:
+		basis <<
+			1, 0, 0,
+			-2, 2, 0,
+			1, -2, 1;
+		break;
+	case kCubic:
+		basis <<
+			1, 0, 0, 0,
+			-3, 3, 0, 0,
+			3, -6, 3, 0,
+			-1, 3, -3, 1;
+		break;
+	case kQuartic:
+		basis <<
+			1, 0, 0, 0, 0,
+			-4, 4, 0, 0, 0,
+			6, -12, 6, 0, 0,
+			-4, 12, -12, 4, 0,
+			1, -4, 6, -4, 1;
+		break;
+	case kQuintic:
+		basis <<
+			1, 0, 0, 0, 0, 0,
+			-5, 5, 0, 0, 0, 0,
+			10, -20, 10, 0, 0, 0,
+			-10, 30, -30, 10, 0, 0,
+			5, -20, 30, -20, 5, 0
+			- 1, 5, -10, 10, -5, 1;
+		break;
+	}
 	return basis;
+}
+
+template <typename Scalar, Degree degree>
+Eigen::Matrix<Scalar, degree, degree> GetTangentCoefficients() {
+	Eigen::Matrix<Scalar, degree, degree> basis;
+	Eigen::DiagonalMatrix<Scalar, degree> coefficients;
+	for (auto i = 0; i < degree; ++i) {
+		coefficients.diagonal()[i] = i + 1;
+	}
+	basis = coefficients;
+	basis.colwise().reverseInPlace();
+	return basis;
+}
+
+Eigen::Matrix<double, Eigen::Dynamic, 1> GetPascalRow(int row) {
+	std::vector<double> row_values;
+	row_values.push_back(1);
+	for (int i = 0; i < row; ++i) {
+		double next_value = row_values[i] * (row - i) / (i + 1);
+		row_values.push_back(next_value);
+	}
+	Eigen::Matrix<double, Eigen::Dynamic, 1> pascal_row;
+	pascal_row.resize(row_values.size(), Eigen::NoChange);
+	for (size_t i = 0; i < row_values.size(); ++i) {
+		pascal_row(i, 0) = row_values[i];
+	}
+	return pascal_row;
 }
 
 /**
-@return	A 3 x 3 matrix of the coefficients of the quadratic power basis.
-*/
-template <typename Scalar>
-Eigen::Matrix<Scalar, 3, 3> GetQuadraticBasis() {
-	Eigen::Matrix<Scalar, 3, 3> basis;
-	basis <<
-		1, 0, 0,
-		-2, 2, 0,
-		1, -2, 1;
-	return basis;
-}
-
-/**	
 @brief	Calculate the coefficients derived from a segment of a composite Bézier curve.
 
 		This function takes a set of 2d or 3d control points and a segment number of a 
@@ -112,16 +155,8 @@ std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points, cons
 
 	// Create and fill the coefficients of the power basis matrix
 	Eigen::Matrix<Scalar, control_size, control_size> basis;
-	switch (degree) {
-	case kCubic:
-		basis << GetCubicBasis<Scalar>();
-		basis.colwise().reverseInPlace();
-		break;
-	case kQuadratic:
-		basis << GetQuadraticBasis<Scalar>();
-		basis.colwise().reverseInPlace(); 
-		break;
-	}
+	basis << GetPowerCoefficients<Scalar, degree>();
+	basis.colwise().reverseInPlace();
 
 	// Create and fill Eigen::Matrix with control points for specified segment
 	const size_t segment_index = (segment_id - 1) * control_size;
@@ -201,14 +236,7 @@ Point CalculateCoordinate(const std::vector<Point>& points, const size_t segment
 
 	// Create and fill the coefficients of the power basis matrix
 	Eigen::Matrix<Scalar, control_size, control_size> basis;
-	switch (degree) {
-	case kCubic:
-		basis << GetCubicBasis<Scalar>();
-		break;
-	case kQuadratic:
-		basis << GetQuadraticBasis<Scalar>();
-		break;
-	}
+	basis << GetPowerCoefficients<Scalar, degree>();
 
 	// Calculate the coordinate
 	Eigen::Matrix<Scalar, dimension, 1> result;
@@ -269,19 +297,7 @@ Point CalculateTangent(const std::vector<Point>& points, const size_t segment_id
 
 	// Create and fill the coefficients of the power basis matrix
 	Eigen::Matrix<Scalar, degree, degree> basis;
-	switch (degree) {
-	case kCubic:
-		basis <<
-			0, 0, 1,
-			0, 2, 0,
-			3, 0, 0;
-		break;
-	case kQuadratic:
-		basis <<
-			0, 1,
-			2, 0;
-		break;
-	}
+	basis << GetTangentCoefficients<Scalar, degree>();
 
 	Eigen::Matrix<Scalar, dimension, 1> result;
 	result = parameter * basis * C;
@@ -342,16 +358,6 @@ Point CalculateNormal(const std::vector<Point>& points, const size_t segment_id,
 	for (size_t i = 0; i < dimension; ++i) {
 		normal[i] = result(i, 0);
 	}
-	//normal = transform * tangent;
-	//normal.normalize();
-	//switch (degree) {
-	//case kCubic:
-	//	//transform.rotate(Eigen::AngleAxis<Scalar>(.5 * M_PI, Eigen::Matrix<Scalar, dimension, 1>::UnitZ()));
-	//	//normal = transform * tangent;
-	//	break;
-	//case kQuadratic:
-	//	break;
-	//}
 
 	return normal;
 }
