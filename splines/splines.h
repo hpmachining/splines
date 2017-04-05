@@ -52,7 +52,7 @@ Point CalculateNormal(const std::vector<Point>& points, const size_t segment_id,
 
 
 /** 
-@return	A 4 x 4 Eigen::Matrix used for cubic curve calculations
+@return	A 4 x 4 matrix of the coefficients of the cubic power basis.
 */
 template <typename Scalar>
 Eigen::Matrix<Scalar, 4, 4> GetCubicBasis() {
@@ -66,7 +66,7 @@ Eigen::Matrix<Scalar, 4, 4> GetCubicBasis() {
 }
 
 /**
-@return	A 3 x 3 Eigen::Matrix used for quadratic curve calculations
+@return	A 3 x 3 matrix of the coefficients of the quadratic power basis.
 */
 template <typename Scalar>
 Eigen::Matrix<Scalar, 3, 3> GetQuadraticBasis() {
@@ -110,7 +110,7 @@ std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points, cons
 		return coefficients;
 	}
 
-	// Create and fill the basis matrix
+	// Create and fill the coefficients of the power basis matrix
 	Eigen::Matrix<Scalar, control_size, control_size> basis;
 	switch (degree) {
 	case kCubic:
@@ -126,8 +126,14 @@ std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points, cons
 	// Create and fill Eigen::Matrix with control points for specified segment
 	const size_t segment_index = (segment_id - 1) * control_size;
 	Eigen::Matrix<Scalar, control_size, dimension> control_points;
-	for (size_t i = segment_index, j = 0; i < segment_index + control_size; ++i, ++j) {
-		control_points.block<1, dimension>(j, 0) = points[i];
+	//for (size_t i = segment_index, j = 0; i < segment_index + control_size; ++i, ++j) {
+	//	control_points.block<1, dimension>(j, 0) = points[i];
+	//}
+
+	for (size_t i = segment_index, p = 0; i < segment_index + control_size; ++i, ++p) {
+		for (size_t j = 0; j < dimension; ++j) {
+			control_points(p, j) = points[i][j];
+		}
 	}
 
 	// Calculate the coefficients
@@ -177,17 +183,23 @@ Point CalculateCoordinate(const std::vector<Point>& points, const size_t segment
 	// Create and fill Eigen::Matrix with control points for specified segment
 	const size_t segment_index = (segment_id - 1) * control_size;
 	Eigen::Matrix<Scalar, control_size, dimension> control_points;
-	for (size_t i = segment_index, j = 0; i < segment_index + control_size; ++i, ++j) {
-		control_points.block<1, dimension>(j, 0) = points[i];
+	//for (size_t i = segment_index, j = 0; i < segment_index + control_size; ++i, ++j) {
+	//	control_points.block<1, dimension>(j, 0) = points[i];
+	//}
+
+	for (size_t i = segment_index, p = 0; i < segment_index + control_size; ++i, ++p) {
+		for (size_t j = 0; j < dimension; ++j) {
+			control_points(p, j) = points[i][j];
+		}
 	}
-	
-	// Create and fill the t parameter matrix
+
+	// Create and fill the power basis (t) matrix
 	Eigen::Matrix<Scalar, 1, control_size> parameter;
 	for (size_t i = 0; i < control_size; ++i) {
 		parameter(0, i) = std::pow(t, i);
 	}
-	
-	// Create and fill the basis matrix
+
+	// Create and fill the coefficients of the power basis matrix
 	Eigen::Matrix<Scalar, control_size, control_size> basis;
 	switch (degree) {
 	case kCubic:
@@ -201,7 +213,9 @@ Point CalculateCoordinate(const std::vector<Point>& points, const size_t segment
 	// Calculate the coordinate
 	Eigen::Matrix<Scalar, dimension, 1> result;
 	result = parameter * basis * control_points;
-	coordinate << result;
+	for (size_t i = 0; i < dimension; ++i) {
+		coordinate[i] = result(i, 0);
+	}
 
 	return coordinate;
 }
@@ -247,13 +261,13 @@ Point CalculateTangent(const std::vector<Point>& points, const size_t segment_id
 		}
 	}
 
-	// Create and fill the parameter matrix
+	// Create and fill the power basis matrix
 	Eigen::Matrix<Scalar, 1, degree> parameter;
 	for (size_t i = 0; i < degree; ++i) {
 		parameter(0, i) = std::pow(t, i);
 	}
 
-	// Create and fill the basis matrix
+	// Create and fill the coefficients of the power basis matrix
 	Eigen::Matrix<Scalar, degree, degree> basis;
 	switch (degree) {
 	case kCubic:
@@ -271,7 +285,9 @@ Point CalculateTangent(const std::vector<Point>& points, const size_t segment_id
 
 	Eigen::Matrix<Scalar, dimension, 1> result;
 	result = parameter * basis * C;
-	tangent << result;
+	for (size_t i = 0; i < dimension; ++i) {
+		tangent[i] = result(i, 0);
+	}
 
 	return tangent;
 }
@@ -299,10 +315,16 @@ Point CalculateNormal(const std::vector<Point>& points, const size_t segment_id,
 	// Copy to Eigen matrices
 	Eigen::Matrix<Scalar, dimension, 1> tangent;
 	Eigen::Matrix<Scalar, dimension, 1> next_tangent;
+	Eigen::Matrix<Scalar, dimension, 1> coordinate;
+	Eigen::Matrix<Scalar, dimension, 1> next_coordinate;
 
-	tangent << tan_1;
-	next_tangent << tan_2;
-	Eigen::Matrix<Scalar, dimension, 1> offset = coord_1 - coord_2;
+	for (size_t i = 0; i < dimension; ++i) {
+		tangent(i, 0) = tan_1[i];
+		next_tangent(i, 0) = tan_2[i];
+		coordinate(i, 0) = coord_1[i];
+		next_coordinate(i, 0) = coord_2[i];
+	}
+	Eigen::Matrix<Scalar, dimension, 1> offset = coordinate - next_coordinate;
 	next_tangent += offset;
 	tangent.normalize();
 	next_tangent.normalize();
@@ -314,8 +336,14 @@ Point CalculateNormal(const std::vector<Point>& points, const size_t segment_id,
 	transform.setIdentity();
 	Eigen::AngleAxis<Scalar> rotation(M_PI_2, z_axis);
 	transform.rotate(rotation);
-	normal = transform * tangent;
-	normal.normalize();
+	Eigen::Matrix<Scalar, dimension, 1> result;
+	result = transform * tangent;
+	result.normalize();
+	for (size_t i = 0; i < dimension; ++i) {
+		normal[i] = result(i, 0);
+	}
+	//normal = transform * tangent;
+	//normal.normalize();
 	//switch (degree) {
 	//case kCubic:
 	//	//transform.rotate(Eigen::AngleAxis<Scalar>(.5 * M_PI, Eigen::Matrix<Scalar, dimension, 1>::UnitZ()));
