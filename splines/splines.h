@@ -43,7 +43,7 @@ template <typename Scalar, size_t degree>
 Eigen::Matrix<Scalar, degree, degree> GetTangentCoefficients();
 
 template <typename Scalar, size_t degree>
-Eigen::DiagonalMatrix<Scalar, Eigen::Dynamic> GetPascalDiagonal();
+Eigen::DiagonalMatrix<Scalar, Eigen::Dynamic> GetBinomialCoefficients();
 
 template <typename Scalar, Dimension, size_t, typename Point>
 std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points, const size_t segment_id);
@@ -60,8 +60,7 @@ Point CalculateNormal(const std::vector<Point>& points, const size_t segment_id,
 template <typename Scalar, size_t degree>
 Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> GetPowerCoefficients() {
 	const size_t order = degree + 1;
-	//Eigen::Matrix<Scalar, order, order> basis;
-	Eigen::Matrix<Scalar, order, order> coefficients = GetPascalDiagonal<Scalar, order>();
+	Eigen::Matrix<Scalar, order, order> coefficients = GetBinomialCoefficients<Scalar, order>();
 	for (int i = 1; i < order; ++i) {
 		for (int j = 0; j < order - i; ++j) {
 			Scalar cell = -(coefficients(i + j, j + 1) / i * (j + 1));
@@ -117,7 +116,7 @@ Eigen::Matrix<Scalar, degree, degree> GetTangentCoefficients() {
 }
 
 template<typename Scalar, size_t order>
-Eigen::DiagonalMatrix<Scalar, Eigen::Dynamic> GetPascalDiagonal() {
+Eigen::DiagonalMatrix<Scalar, Eigen::Dynamic> GetBinomialCoefficients() {
 	const size_t degree = order - 1;
 	Eigen::DiagonalMatrix<Scalar, Eigen::Dynamic> coefficients;
 	coefficients.resize(order);

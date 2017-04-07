@@ -459,7 +459,7 @@ namespace UnitTest1
 		TEST_METHOD(PascalRow) {
 			std::ofstream out_file("pascalRow.dat");
 			out_file << std::fixed << std::setprecision(0);
-			Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> pascal_row = bezier::GetPascalDiagonal<double, 10>();
+			Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> pascal_row = bezier::GetBinomialCoefficients<double, 10>();
 			out_file << pascal_row.transpose() << '\n';
 		}
 
