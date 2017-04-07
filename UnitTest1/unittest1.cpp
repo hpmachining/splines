@@ -272,7 +272,7 @@ namespace UnitTest1
 		{
 			using Point = Eigen::Vector3d;
 			//using Point = std::array<double, 3>;
-			std::ifstream in_file("cubic.dat");
+			std::ifstream in_file("cubic3d.dat");
 			Assert::IsTrue(in_file.is_open());
 			std::ofstream out_file("cubic3dtan.points");
 			Point control_point;
@@ -459,10 +459,8 @@ namespace UnitTest1
 		TEST_METHOD(PascalRow) {
 			std::ofstream out_file("pascalRow.dat");
 			out_file << std::fixed << std::setprecision(0);
-			for (int row = 0; row < 100; ++row) {
-				Eigen::Matrix<double, Eigen::Dynamic, 1> pascal_row = bezier::GetPascalRow(row);
-				out_file << pascal_row.transpose() << '\n';
-			}
+			Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> pascal_row = bezier::GetPascalDiagonal<double, 10>();
+			out_file << pascal_row.transpose() << '\n';
 		}
 
 	};

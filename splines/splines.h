@@ -36,65 +36,75 @@ enum Dimension {
 	k3d
 };
 
-template <typename Scalar, Degree degree>
-Eigen::Matrix<Scalar, degree + 1, degree + 1> GetPowerCoefficients();
+template <typename Scalar, size_t degree>
+Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> GetPowerCoefficients();
 
-template <typename Scalar, Degree degree>
+template <typename Scalar, size_t degree>
 Eigen::Matrix<Scalar, degree, degree> GetTangentCoefficients();
 
-Eigen::Matrix<double, Eigen::Dynamic, 1> GetPascalRow(int row);
+template <typename Scalar, size_t degree>
+Eigen::DiagonalMatrix<Scalar, Eigen::Dynamic> GetPascalDiagonal();
 
-template <typename Scalar, Dimension, Degree, typename Point>
+template <typename Scalar, Dimension, size_t, typename Point>
 std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points, const size_t segment_id);
 
-template <typename Scalar, Dimension, Degree, typename Point>
+template <typename Scalar, Dimension, size_t, typename Point>
 Point CalculateCoordinate(const std::vector<Point>& points, const size_t segment_id, const Scalar t);
 
-template <typename Scalar, Dimension, Degree, typename Point>
+template <typename Scalar, Dimension, size_t, typename Point>
 Point CalculateTangent(const std::vector<Point>& points, const size_t segment_id, const Scalar t);
 
-template <typename Scalar, Dimension, Degree, typename Point>
+template <typename Scalar, Dimension, size_t, typename Point>
 Point CalculateNormal(const std::vector<Point>& points, const size_t segment_id, const Scalar t);
 
-template <typename Scalar, Degree degree>
-Eigen::Matrix<Scalar, degree + 1, degree + 1> GetPowerCoefficients() {
-	Eigen::Matrix<Scalar, degree + 1, degree + 1> basis;
-	switch (degree) {
-	case kQuadratic:
-		basis <<
-			1, 0, 0,
-			-2, 2, 0,
-			1, -2, 1;
-		break;
-	case kCubic:
-		basis <<
-			1, 0, 0, 0,
-			-3, 3, 0, 0,
-			3, -6, 3, 0,
-			-1, 3, -3, 1;
-		break;
-	case kQuartic:
-		basis <<
-			1, 0, 0, 0, 0,
-			-4, 4, 0, 0, 0,
-			6, -12, 6, 0, 0,
-			-4, 12, -12, 4, 0,
-			1, -4, 6, -4, 1;
-		break;
-	case kQuintic:
-		basis <<
-			1, 0, 0, 0, 0, 0,
-			-5, 5, 0, 0, 0, 0,
-			10, -20, 10, 0, 0, 0,
-			-10, 30, -30, 10, 0, 0,
-			5, -20, 30, -20, 5, 0
-			- 1, 5, -10, 10, -5, 1;
-		break;
+template <typename Scalar, size_t degree>
+Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> GetPowerCoefficients() {
+	const size_t order = degree + 1;
+	//Eigen::Matrix<Scalar, order, order> basis;
+	Eigen::Matrix<Scalar, order, order> coefficients = GetPascalDiagonal<Scalar, order>();
+	for (int i = 1; i < order; ++i) {
+		for (int j = 0; j < order - i; ++j) {
+			Scalar cell = -(coefficients(i + j, j + 1) / i * (j + 1));
+			coefficients(i + j, j) = cell;
+		}
 	}
-	return basis;
+	return coefficients;
+	//switch (degree) {
+	//case kQuadratic:
+	//	basis <<
+	//		1, 0, 0,
+	//		-2, 2, 0,
+	//		1, -2, 1;
+	//	break;
+	//case kCubic:
+	//	basis <<
+	//		1, 0, 0, 0,
+	//		-3, 3, 0, 0,
+	//		3, -6, 3, 0,
+	//		-1, 3, -3, 1;
+	//	break;
+	//case kQuartic:
+	//	basis <<
+	//		1, 0, 0, 0, 0,
+	//		-4, 4, 0, 0, 0,
+	//		6, -12, 6, 0, 0,
+	//		-4, 12, -12, 4, 0,
+	//		1, -4, 6, -4, 1;
+	//	break;
+	//case kQuintic:
+	//	basis <<
+	//		1, 0, 0, 0, 0, 0,
+	//		-5, 5, 0, 0, 0, 0,
+	//		10, -20, 10, 0, 0, 0,
+	//		-10, 30, -30, 10, 0, 0,
+	//		5, -20, 30, -20, 5, 0
+	//		- 1, 5, -10, 10, -5, 1;
+	//	break;
+	//}
+	//return basis;
 }
 
-template <typename Scalar, Degree degree>
+template <typename Scalar, size_t degree>
 Eigen::Matrix<Scalar, degree, degree> GetTangentCoefficients() {
 	Eigen::Matrix<Scalar, degree, degree> basis;
 	Eigen::DiagonalMatrix<Scalar, degree> coefficients;
@@ -106,19 +116,16 @@ Eigen::Matrix<Scalar, degree, degree> GetTangentCoefficients() {
 	return basis;
 }
 
-Eigen::Matrix<double, Eigen::Dynamic, 1> GetPascalRow(int row) {
-	std::vector<double> row_values;
-	row_values.push_back(1);
-	for (int i = 0; i < row; ++i) {
-		double next_value = row_values[i] * (row - i) / (i + 1);
-		row_values.push_back(next_value);
+template<typename Scalar, size_t order>
+Eigen::DiagonalMatrix<Scalar, Eigen::Dynamic> GetPascalDiagonal() {
+	const size_t degree = order - 1;
+	Eigen::DiagonalMatrix<Scalar, Eigen::Dynamic> coefficients;
+	coefficients.resize(order);
+	coefficients.diagonal()[0] = 1;
+	for (int i = 0; i < degree; ++i) {
+		coefficients.diagonal()[i + 1] = coefficients.diagonal()[i] * (degree - i) / (i + 1);
 	}
-	Eigen::Matrix<double, Eigen::Dynamic, 1> pascal_row;
-	pascal_row.resize(row_values.size(), Eigen::NoChange);
-	for (size_t i = 0; i < row_values.size(); ++i) {
-		pascal_row(i, 0) = row_values[i];
-	}
-	return pascal_row;
+	return coefficients;
 }
 
 /**
@@ -141,38 +148,38 @@ Eigen::Matrix<double, Eigen::Dynamic, 1> GetPascalRow(int row) {
 		\f${A_{x,y,(z)},B_{x,y,(z)}, C_{x,y,(z)}, D_{x,y,(z)}}\f$. 3d curves will have 12
 		coefficients and 2d curves will have 8.
 */
-template <typename Scalar, Dimension dimension, Degree degree, typename Point>
+template <typename Scalar, Dimension dimension, size_t degree, typename Point>
 std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points, const size_t segment_id) {
 	// Determine the size of a control point set for one Bézier curve segment,
 	// then check if the input data is valid.
-	const size_t control_size = degree + 1;
+	const size_t order = degree + 1;
 	// Omits the last set of control points if not a complete set.
-	const size_t num_segments = points.size() / control_size;	 
+	const size_t num_segments = points.size() / order;	 
 	std::vector<Scalar> coefficients;
 	if (num_segments == 0 || segment_id < 1 || segment_id > num_segments) {
 		return coefficients;
 	}
 
 	// Create and fill the coefficients of the power basis matrix
-	Eigen::Matrix<Scalar, control_size, control_size> basis;
+	Eigen::Matrix<Scalar, order, order> basis;
 	basis << GetPowerCoefficients<Scalar, degree>();
 	basis.colwise().reverseInPlace();
 
 	// Create and fill Eigen::Matrix with control points for specified segment
-	const size_t segment_index = (segment_id - 1) * control_size;
-	Eigen::Matrix<Scalar, control_size, dimension> control_points;
-	//for (size_t i = segment_index, j = 0; i < segment_index + control_size; ++i, ++j) {
+	const size_t segment_index = (segment_id - 1) * order;
+	Eigen::Matrix<Scalar, order, dimension> control_points;
+	//for (size_t i = segment_index, j = 0; i < segment_index + order; ++i, ++j) {
 	//	control_points.block<1, dimension>(j, 0) = points[i];
 	//}
 
-	for (size_t i = segment_index, p = 0; i < segment_index + control_size; ++i, ++p) {
+	for (size_t i = segment_index, p = 0; i < segment_index + order; ++i, ++p) {
 		for (size_t j = 0; j < dimension; ++j) {
 			control_points(p, j) = points[i][j];
 		}
 	}
 
 	// Calculate the coefficients
-	Eigen::Matrix<Scalar, control_size, dimension> result;
+	Eigen::Matrix<Scalar, order, dimension> result;
 	result = basis * control_points;
 	for (auto p = 0; p < result.rows(); ++p) {
 		for (auto q = 0; q < result.cols(); ++q) {
@@ -203,39 +210,39 @@ std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points, cons
 @param	points Control points. Number of control points for each segment must be \f$degree + 1\f$
 @return	Coordinate of type *Point* for the calculated position.
 */
-template <typename Scalar, Dimension dimension, Degree degree, typename Point>
+template <typename Scalar, Dimension dimension, size_t degree, typename Point>
 Point CalculateCoordinate(const std::vector<Point>& points, const size_t segment_id, const Scalar t) {
 	// Determine the size of a control point set for one Bézier curve segment, then check if the
 	// input data is valid.
-	const size_t control_size = degree + 1;
+	const size_t order = degree + 1;
 	// Omits last set of control points if not a complete set.
-	const size_t num_segments = points.size() / control_size;
+	const size_t num_segments = points.size() / order;
 	Point coordinate;
 	if (num_segments == 0 || segment_id < 1 || segment_id > num_segments) {
 		return coordinate;
 	}
 
 	// Create and fill Eigen::Matrix with control points for specified segment
-	const size_t segment_index = (segment_id - 1) * control_size;
-	Eigen::Matrix<Scalar, control_size, dimension> control_points;
-	//for (size_t i = segment_index, j = 0; i < segment_index + control_size; ++i, ++j) {
+	const size_t segment_index = (segment_id - 1) * order;
+	Eigen::Matrix<Scalar, order, dimension> control_points;
+	//for (size_t i = segment_index, j = 0; i < segment_index + order; ++i, ++j) {
 	//	control_points.block<1, dimension>(j, 0) = points[i];
 	//}
 
-	for (size_t i = segment_index, p = 0; i < segment_index + control_size; ++i, ++p) {
+	for (size_t i = segment_index, p = 0; i < segment_index + order; ++i, ++p) {
 		for (size_t j = 0; j < dimension; ++j) {
 			control_points(p, j) = points[i][j];
 		}
 	}
 
 	// Create and fill the power basis (t) matrix
-	Eigen::Matrix<Scalar, 1, control_size> parameter;
-	for (size_t i = 0; i < control_size; ++i) {
+	Eigen::Matrix<Scalar, 1, order> parameter;
+	for (size_t i = 0; i < order; ++i) {
 		parameter(0, i) = std::pow(t, i);
 	}
 
 	// Create and fill the coefficients of the power basis matrix
-	Eigen::Matrix<Scalar, control_size, control_size> basis;
+	Eigen::Matrix<Scalar, order, order> basis;
 	basis << GetPowerCoefficients<Scalar, degree>();
 
 	// Calculate the coordinate
@@ -265,13 +272,13 @@ Point CalculateCoordinate(const std::vector<Point>& points, const size_t segment
 @param	points Control points. Number of control points for each segment must be \f$degree + 1\f$
 @return	Coordinate of type *Point* for the calculated tangent vector.
 */
-template <typename Scalar, Dimension dimension, Degree degree, typename Point>
+template <typename Scalar, Dimension dimension, size_t degree, typename Point>
 Point CalculateTangent(const std::vector<Point>& points, const size_t segment_id, const Scalar t) {
 	// Determine the size of a control point set for one Bézier curve segment, then check if the
 	// input data is valid.
-	const size_t control_size = degree + 1;
+	const size_t order = degree + 1;
 	// Omits last set of control points if not a complete set.
-	const size_t num_segments = points.size() / control_size;
+	const size_t num_segments = points.size() / order;
 	Point tangent;
 	if (num_segments == 0 || segment_id < 1 || segment_id > num_segments) {
 		return tangent;
@@ -308,13 +315,13 @@ Point CalculateTangent(const std::vector<Point>& points, const size_t segment_id
 	return tangent;
 }
 
-template <typename Scalar, Dimension dimension, Degree degree, typename Point>
+template <typename Scalar, Dimension dimension, size_t degree, typename Point>
 Point CalculateNormal(const std::vector<Point>& points, const size_t segment_id, const Scalar t) {
 	// Determine the size of a control point set for one Bézier curve segment, then check if the
 	// input data is valid.
-	const size_t control_size = degree + 1;
+	const size_t order = degree + 1;
 	// Omits last set of control points if not a complete set.
-	const size_t num_segments = points.size() / control_size;
+	const size_t num_segments = points.size() / order;
 	Point normal;
 	if (num_segments == 0 || segment_id < 1 || segment_id > num_segments) {
 		return normal;
