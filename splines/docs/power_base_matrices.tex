@@ -1,0 +1,126 @@
+\documentclass[10pt,letterpaper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\makeatletter
+\renewcommand*\env@matrix[1][c]{\hskip -\arraycolsep
+  \let\@ifnextchar\new@ifnextchar
+  \array{*\c@MaxMatrixCols #1}}
+\makeatother
+\begin{document}
+\noindent
+The $n + 1$ Bernstein basis polynomials of degree $n$ are defined as
+\[
+ b_{v,n}(t) =  \left(
+\begin{matrix}
+n\\
+v
+\end{matrix}
+\right)x^t(1 - t)^{n - v}, v = 0,...,n
+\]
+\\
+The coefficients $\beta_v$ are the Bernstein or Bézier coefficients.
+A linear combination of Bernstein basis polynomials
+\[
+B_n(t) = \displaystyle\sum_{v = 0}^n\beta_v b_{v,n}(t)
+\]
+\begin{align*}
+B(t) &= 1 \\
+B(t) &= (1-t)^2 + 2t(1-t) + t^2 \\
+B(t) &= (1-t)^3 + 3t(1-t)^2 + 3t^2(1-t) + t^3 \\
+B(t) &= (1-t)^4 + 4t(1-t)^3 + 6t^2(1-t)^3 + 4t^3(1-t) + t^4 \\
+\end{align*}
+Control Points given as $ \lbrace P_1, P_2, P_3, ..., P_{n+1}\rbrace$\\
+\\
+Matrix form for Quadratic Bézier curves (degree 2)\\
+\[
+B(t) =
+\begin{bmatrix} 1 & t & t^2 \end{bmatrix}
+\cdot
+\begin{bmatrix}[r]
+1 & 0 & 0\\
+-2 & 2 & 0\\
+1 & -2 & 1
+\end{bmatrix}
+\cdot
+\begin{bmatrix}
+P_1\\
+P_2\\
+P_3
+\end{bmatrix}
+\]
+\newline
+\newline
+Cubic Bézier curves (degree 3)
+\[
+B(t) =
+\begin{bmatrix}
+1 & t & t^2 & t^3
+\end{bmatrix}
+\cdot
+\begin{bmatrix}[r]
+1 & 0 & 0 & 0\\
+-3 & 3 & 0 & 0\\
+3 & -6 & 3 & 0\\
+-1 & 3 & -3 & 1
+\end{bmatrix}
+\cdot
+\begin{bmatrix}
+P_1\\
+P_2\\
+P_3\\
+P_4
+\end{bmatrix}
+\]
+\newline
+\newline
+Quartic Bézier curves (degree 4)
+\[
+B(t) =
+\begin{bmatrix} 1 & t & t^2 & t^3 & t^4 \end{bmatrix}
+\cdot
+\begin{bmatrix}[r]
+1 & 0 & 0 & 0 & 0\\
+-4 & 4 & 0 & 0 & 0\\
+6 & -12 & 6 & 0 & 0\\
+-4 & 12 & -12 & 4 & 0\\
+1 & -4 & 6 & -4 & 1
+\end{bmatrix}
+\cdot
+\begin{bmatrix}
+P_1\\
+P_2\\
+P_3\\
+P_4\\
+P_5
+\end{bmatrix}
+\]
+\newline
+\newline
+Quintic Bézier curves (degree 5)
+\[
+B(t) =
+\begin{bmatrix} 1 & t & t^2 & t^3 & t^4 & t^5 \end{bmatrix}
+\cdot
+\begin{bmatrix}[r]
+1 & 0 & 0 & 0 & 0 & 0\\
+-5 & 5 & 0 & 0 & 0 & 0\\
+10 & -20 & 10 & 0 & 0 & 0\\
+-10 & 30 & -30 & 10 & 0 & 0\\
+5 & -20 & 30 & -20 & 5 & 0\\
+-1 & 5 & -10 & 10 & -5 & 1
+\end{bmatrix}
+\cdot
+\begin{bmatrix}
+P_1\\
+P_2\\
+P_3\\
+P_4\\
+P_5\\
+P_6
+\end{bmatrix}
+\]
+\newline
+
+\end{document}

@@ -57,6 +57,9 @@ Point CalculateTangent(const std::vector<Point>& points, const size_t segment_id
 template <typename Scalar, Dimension, size_t, typename Point>
 Point CalculateNormal(const std::vector<Point>& points, const size_t segment_id, const Scalar t);
 
+template <typename Scalar, size_t degree, bezier::Dimension dimension, typename Point>
+std::vector<Point> SplitSegment(const std::vector<Point>& points, size_t segment_id, Scalar t);
+
 template <typename Scalar, size_t degree>
 Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> GetPowerCoefficients() {
 	const size_t order = degree + 1;
@@ -366,6 +369,56 @@ Point CalculateNormal(const std::vector<Point>& points, const size_t segment_id,
 	}
 
 	return normal;
+}
+
+template <typename Scalar, size_t degree, bezier::Dimension dimension, typename Point>
+std::vector<Point> SplitSegment(const std::vector<Point>& points, size_t segment_id, Scalar t) {
+	// Determine the size of a control point set for one Bézier curve segment, then check if the
+	// input data is valid.
+	const size_t order = degree + 1;
+	// Omits last set of control points if not a complete set.
+	const size_t num_segments = points.size() / order;
+	std::vector<Point> split_segments;
+	if (num_segments == 0 || segment_id < 1 || segment_id > num_segments) {
+		return split_segments;
+	}
+
+	// Create and fill Eigen::Matrix with control points for specified segment
+	const size_t segment_index = (segment_id - 1) * order;
+	Eigen::Matrix<Scalar, order, dimension> P;
+	for (size_t i = segment_index, p = 0; i < segment_index + order; ++i, ++p) {
+		for (size_t j = 0; j < dimension; ++j) {
+			P(p, j) = points[i][j];
+		}
+	}
+
+	// Create and fill the power basis matrices
+	Eigen::Matrix<Scalar, order, order> Z;
+	Z.setZero();
+	Eigen::Matrix<Scalar, 1, order> power;
+	for (size_t i = 0; i < order; ++i) {
+		power(0, i) = std::pow(t, i);
+		Z.diagonal()[i] = power(0, i);
+	}
+
+	Eigen::Matrix<Scalar, order, order> M = bezier::GetPowerCoefficients<Scalar, degree>();
+	Eigen::Matrix<Scalar, order, order> M1 = M.inverse();
+	Eigen::Matrix<Scalar, order, order> Q = M1 * Z * M;
+	Eigen::Matrix<Scalar, order, order> Q1 = Q.colwise().reverse();
+	Q1.rowwise().reverseInPlace();
+	result = Q * P;
+	Point point;
+	for (size_t i = 0; i < dimension; ++i) {
+		point[i] = result(i, 0);
+	}
+	split_segments.push_back(point);
+	result = Q1 * P;
+	for (size_t i = 0; i < dimension; ++i) {
+		point[i] = result(i, 0);
+	}
+	split_segments.push_back(point);
+
+	return split_segments;
 }
 
 }	// end namespace bezier
