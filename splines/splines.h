@@ -1,6 +1,6 @@
 /**
 @mainpage
-A collection of templated functions for working with Quadratic and Cubic Bézier curves.
+A collection of templated functions for working with Bézier curves.
 
 
 
@@ -8,6 +8,7 @@ A collection of templated functions for working with Quadratic and Cubic Bézier 
 
 #pragma once
 
+#include "SplineHelper.h"
 #include <cmath>
 #include <vector>
 #include <iostream>
@@ -15,18 +16,6 @@ A collection of templated functions for working with Quadratic and Cubic Bézier 
 #include <Eigen/StdVector>
 
 namespace bezier {
-
-/** Specifies the degree of the curve */
-enum Degree {
-	/** Degree = 2 */
-	kQuadratic = 2,
-	/** Degree = 3 */
-	kCubic,
-	/** Degree = 4 */
-	kQuartic,
-	/** Degree = 5 */
-	kQuintic,
-};
 
 /** Specifies the coordinate dimension */
 enum Dimension {
@@ -36,129 +25,45 @@ enum Dimension {
 	k3d
 };
 
-template <typename Scalar, size_t degree>
-Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> GetPowerCoefficients();
 
-template <typename Scalar, size_t degree>
-Eigen::Matrix<Scalar, degree, degree> GetTangentCoefficients();
-
-template <typename Scalar, size_t degree>
-Eigen::DiagonalMatrix<Scalar, Eigen::Dynamic> GetBinomialCoefficients();
-
-template <typename Scalar, Dimension, size_t, typename Point>
+template <typename Scalar, Dimension dimension, size_t degree, typename Point>
 std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points, const size_t segment_id);
 
-template <typename Scalar, Dimension, size_t, typename Point>
+template <typename Scalar, Dimension dimension, size_t degree, typename Point>
 Point CalculateCoordinate(const std::vector<Point>& points, const size_t segment_id, const Scalar t);
 
-template <typename Scalar, Dimension, size_t, typename Point>
+template <typename Scalar, Dimension dimension, size_t degree, typename Point>
 Point CalculateTangent(const std::vector<Point>& points, const size_t segment_id, const Scalar t);
 
-template <typename Scalar, Dimension, size_t, typename Point>
+template <typename Scalar, Dimension dimension, size_t degree, typename Point>
 Point CalculateNormal(const std::vector<Point>& points, const size_t segment_id, const Scalar t);
 
-template <typename Scalar, size_t degree, bezier::Dimension dimension, typename Point>
-std::vector<Point> SplitSegment(const std::vector<Point>& points, size_t segment_id, Scalar t);
-
-template <typename Scalar, size_t degree>
-Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> GetPowerCoefficients() {
-	const size_t order = degree + 1;
-	Eigen::Matrix<Scalar, order, order> coefficients = GetBinomialCoefficients<Scalar, order>();
-	for (int i = 1; i < order; ++i) {
-		for (int j = 0; j < order - i; ++j) {
-			Scalar cell = -(coefficients(i + j, j + 1) / i * (j + 1));
-			coefficients(i + j, j) = cell;
-		}
-	}
-	return coefficients;
-	//switch (degree) {
-	//case kQuadratic:
-	//	basis <<
-	//		1, 0, 0,
-	//		-2, 2, 0,
-	//		1, -2, 1;
-	//	break;
-	//case kCubic:
-	//	basis <<
-	//		1, 0, 0, 0,
-	//		-3, 3, 0, 0,
-	//		3, -6, 3, 0,
-	//		-1, 3, -3, 1;
-	//	break;
-	//case kQuartic:
-	//	basis <<
-	//		1, 0, 0, 0, 0,
-	//		-4, 4, 0, 0, 0,
-	//		6, -12, 6, 0, 0,
-	//		-4, 12, -12, 4, 0,
-	//		1, -4, 6, -4, 1;
-	//	break;
-	//case kQuintic:
-	//	basis <<
-	//		1, 0, 0, 0, 0, 0,
-	//		-5, 5, 0, 0, 0, 0,
-	//		10, -20, 10, 0, 0, 0,
-	//		-10, 30, -30, 10, 0, 0,
-	//		5, -20, 30, -20, 5, 0
-	//		- 1, 5, -10, 10, -5, 1;
-	//	break;
-	//}
-	//return basis;
-}
-
-template <typename Scalar, size_t degree>
-Eigen::Matrix<Scalar, degree, degree> GetTangentCoefficients() {
-	Eigen::Matrix<Scalar, degree, degree> basis;
-	Eigen::DiagonalMatrix<Scalar, degree> coefficients;
-	for (auto i = 0; i < degree; ++i) {
-		coefficients.diagonal()[i] = i + 1;
-	}
-	basis = coefficients;
-	basis.colwise().reverseInPlace();
-	return basis;
-}
-
-template<typename Scalar, size_t order>
-Eigen::DiagonalMatrix<Scalar, Eigen::Dynamic> GetBinomialCoefficients() {
-	const size_t degree = order - 1;
-	Eigen::DiagonalMatrix<Scalar, Eigen::Dynamic> coefficients;
-	coefficients.resize(order);
-	coefficients.diagonal()[0] = 1;
-	for (int i = 0; i < degree; ++i) {
-		coefficients.diagonal()[i + 1] = coefficients.diagonal()[i] * (degree - i) / (i + 1);
-	}
-	return coefficients;
-}
+template <typename Scalar, Dimension dimension, size_t degree, typename Point>
+std::vector<Point> SplitSegment(const std::vector<Point>& points, const size_t segment_id, const Scalar t);
 
 /**
 @brief	Calculate the coefficients derived from a segment of a composite Bézier curve.
 
 		This function takes a set of 2d or 3d control points and a segment number of a 
-		quadratic or cubic composite Bézier curve and returns the coefficients.
-		Control point sets must be in multiples of \f$degree + 1\f$.
+		composite Bézier curve and returns the coefficients. Control point sets should be in 
+		multiples of \f$degree + 1\f$.
 
 @tparam Scalar Type of data being passed in. Valid types are float and double.
-@tparam dimension Dimension of control point coordinates.
-		Valid options are bezier::k2d or bezier::k3d
+@tparam dimension Dimension of control point coordinates. Valid options are bezier::k2d or bezier::k3d
 @tparam	degree Degree of the Bézier curve.
-		Valid options are bezier::kQuadratic and bezier::kCubic.
 @tparam Point Container type for the points. Must have [] accessor. [0] = x, [1] = y, and if 3d, [2] = z.
-@param	points Control points. Number of control points for each segment must be \f$degree + 1\f$
+@param	points Control points. Number of control points for each segment should be \f$degree + 1\f$
 @param	segment_id Indicates which segment of the composite Bézier curve to process. Numbering
 		starts at 1.
 @return	Coefficients calculated from the control points. Coefficients are stored in the order
-		\f${A_{x,y,(z)},B_{x,y,(z)}, C_{x,y,(z)}, D_{x,y,(z)}}\f$. 3d curves will have 12
-		coefficients and 2d curves will have 8.
+		\f${C_{1_{x,y,(z)}},C_{2_{x,y,(z)}}, ..., C_{n_{x,y,(z)}}}\f$ where \f$n = degree + 1\f$.
+		3d curves will have \f$n \cdot 3\f$ coefficients and 2d curves will have \f$n \cdot 2\f$.
 */
 template <typename Scalar, Dimension dimension, size_t degree, typename Point>
 std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points, const size_t segment_id) {
-	// Determine the size of a control point set for one Bézier curve segment,
-	// then check if the input data is valid.
 	const size_t order = degree + 1;
-	// Omits the last set of control points if not a complete set.
-	const size_t num_segments = points.size() / order;	 
 	std::vector<Scalar> coefficients;
-	if (num_segments == 0 || segment_id < 1 || segment_id > num_segments) {
+	if (!IsSegmentDataValid(points, order, segment_id)) {
 		return coefficients;
 	}
 
@@ -170,10 +75,6 @@ std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points, cons
 	// Create and fill Eigen::Matrix with control points for specified segment
 	const size_t segment_index = (segment_id - 1) * order;
 	Eigen::Matrix<Scalar, order, dimension> control_points;
-	//for (size_t i = segment_index, j = 0; i < segment_index + order; ++i, ++j) {
-	//	control_points.block<1, dimension>(j, 0) = points[i];
-	//}
-
 	for (size_t i = segment_index, p = 0; i < segment_index + order; ++i, ++p) {
 		for (size_t j = 0; j < dimension; ++j) {
 			control_points(p, j) = points[i][j];
@@ -195,32 +96,25 @@ std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points, cons
 /**	
 @brief	Calculate a position on a segment of a composite Bézier curve.
 
-		This function calculates the coordinate at parameter \f$t\f$ on a quadratic or cubic
-		Bézier curve segment. It is an implementation of the equations
-		\f$B(t) = (1-t)^3P_0 + 3(1-t)^2tP_1 + 3(1-t)t^2P_2 + t^3P_3,\; 0 \le t \le 1\f$ for cubic 
-		curves and \f$B(t) = (1-t)^2P_0 + 2(1-t)tP_1 + t^2P_2,\; 0 \le t \le 1\f$ for quadratic 
-		curves.
+		This function calculates the coordinate at parameter \f$t\f$ on a Bézier curve segment.
 
 @tparam Scalar Type of data being passed in. Valid types are float and double.
 @tparam Dimension Dimension of control point coordinates. Valid options are bezier::k2d or bezier::k3d
-@tparam	Degree Degree of the Bézier curve. Valid options are bezier::kQuadratic and bezier::kCubic.
+@tparam	Degree Degree of the Bézier curve.
 @tparam Point Container type for the points. Must have [] accessor. [0] = x, [1] = y, and if 3d, [2] = z.
 @param	segment_id Segment number to use for calculation.
 @param	t Parameter in the range \f$0 \le t \le 1\f$ for a point on the curve segment. Values
 		outside of this range may be used to calculate a coordinate on a natural extension of the 
 		curve segment.
-@param	points Control points. Number of control points for each segment must be \f$degree + 1\f$
+@param	points Control points. Number of control points for each segment should be \f$degree + 1\f$
 @return	Coordinate of type *Point* for the calculated position.
 */
 template <typename Scalar, Dimension dimension, size_t degree, typename Point>
 Point CalculateCoordinate(const std::vector<Point>& points, const size_t segment_id, const Scalar t) {
-	// Determine the size of a control point set for one Bézier curve segment, then check if the
-	// input data is valid.
 	const size_t order = degree + 1;
-	// Omits last set of control points if not a complete set.
-	const size_t num_segments = points.size() / order;
 	Point coordinate;
-	if (num_segments == 0 || segment_id < 1 || segment_id > num_segments) {
+	//if (num_segments == 0 || segment_id < 1 || segment_id > num_segments) {
+	if (!IsSegmentDataValid(points, order, segment_id)) {
 		return coordinate;
 	}
 
@@ -260,29 +154,24 @@ Point CalculateCoordinate(const std::vector<Point>& points, const size_t segment
 /**
 @brief	Calculate a tangent vector on a segment of a composite Bézier curve.
 
-		This function calculates the tangent vector at parameter \f$t\f$ on a quadratic or cubic
-		Bézier curve segment.
+		This function calculates the tangent vector at parameter \f$t\f$ on a Bézier curve segment.
 
 @tparam Scalar Type of data being passed in. Valid types are float and double.
 @tparam Dimension Dimension of control point coordinates. Valid options are bezier::k2d or bezier::k3d
-@tparam	Degree Degree of the Bézier curve. Valid options are bezier::kQuadratic and bezier::kCubic.
+@tparam	Degree Degree of the Bézier curve. 
 @tparam Point Container type for the points. Must have [] accessor. [0] = x, [1] = y and if 3d, [2] = z.
 @param	segment_id Segment number to use for calculation.
 @param	t Parameter in the range \f$0 \le t \le 1\f$ for a point on the curve segment. Values 
 		outside of this range may be used to calculate a coordinate on a natural extension of the 
 		curve segment.
-@param	points Control points. Number of control points for each segment must be \f$degree + 1\f$
+@param	points Control points. Number of control points for each segment should be \f$degree + 1\f$
 @return	Coordinate of type *Point* for the calculated tangent vector.
 */
 template <typename Scalar, Dimension dimension, size_t degree, typename Point>
 Point CalculateTangent(const std::vector<Point>& points, const size_t segment_id, const Scalar t) {
-	// Determine the size of a control point set for one Bézier curve segment, then check if the
-	// input data is valid.
 	const size_t order = degree + 1;
-	// Omits last set of control points if not a complete set.
-	const size_t num_segments = points.size() / order;
 	Point tangent;
-	if (num_segments == 0 || segment_id < 1 || segment_id > num_segments) {
+	if (!IsSegmentDataValid(points, order, segment_id)) {
 		return tangent;
 	}
 
@@ -317,15 +206,27 @@ Point CalculateTangent(const std::vector<Point>& points, const size_t segment_id
 	return tangent;
 }
 
+/**
+@brief	Calculate a normal vector on a segment of a composite Bézier curve.
+
+This function calculates the normal vector at parameter \f$t\f$ on a Bézier curve segment.
+
+@tparam Scalar Type of data being passed in. Valid types are float and double.
+@tparam Dimension Dimension of control point coordinates. Valid options are bezier::k2d or bezier::k3d
+@tparam	Degree Degree of the Bézier curve.
+@tparam Point Container type for the points. Must have [] accessor. [0] = x, [1] = y and if 3d, [2] = z.
+@param	segment_id Segment number to use for calculation.
+@param	t Parameter in the range \f$0 \le t \le 1\f$ for a point on the curve segment. Values
+outside of this range may be used to calculate a coordinate on a natural extension of the
+curve segment.
+@param	points Control points. Number of control points for each segment should be \f$degree + 1\f$
+@return	Coordinate of type *Point* for the calculated tangent vector.
+*/
 template <typename Scalar, Dimension dimension, size_t degree, typename Point>
 Point CalculateNormal(const std::vector<Point>& points, const size_t segment_id, const Scalar t) {
-	// Determine the size of a control point set for one Bézier curve segment, then check if the
-	// input data is valid.
 	const size_t order = degree + 1;
-	// Omits last set of control points if not a complete set.
-	const size_t num_segments = points.size() / order;
 	Point normal;
-	if (num_segments == 0 || segment_id < 1 || segment_id > num_segments) {
+	if (!IsSegmentDataValid(points, order, segment_id)) {
 		return normal;
 	}
 
@@ -371,15 +272,27 @@ Point CalculateNormal(const std::vector<Point>& points, const size_t segment_id,
 	return normal;
 }
 
-template <typename Scalar, size_t degree, bezier::Dimension dimension, typename Point>
-std::vector<Point> SplitSegment(const std::vector<Point>& points, size_t segment_id, Scalar t) {
-	// Determine the size of a control point set for one Bézier curve segment, then check if the
-	// input data is valid.
+/**
+@brief	Divide a Bézier curve segment into 2 smaller segments.
+
+This function divides a Bézier curve segment at parameter \f$t\f$ and returns 2 sets of control
+points representing the subdivided segments.
+
+@tparam Scalar Type of data being passed in. Valid types are float and double.
+@tparam Dimension Dimension of control point coordinates. Valid options are bezier::k2d or bezier::k3d
+@tparam	Degree Degree of the Bézier curve.
+@tparam Point Container type for the points. Must have [] accessor. [0] = x, [1] = y and if 3d, [2] = z.
+@param	segment_id Segment number to use for calculation.
+@param	t Parameter in the range \f$0 \le t \le 1\f$ which indicates the position to split the curve segment.
+@param	points Control points of a composite Bézier. Number of control points for each segment 
+		should be \f$degree + 1\f$
+@return	Coordinate of type *Point* for the calculated tangent vector.
+*/
+template <typename Scalar, Dimension dimension, size_t degree, typename Point>
+std::vector<Point> SplitSegment(const std::vector<Point>& points, const size_t segment_id, const Scalar t) {
 	const size_t order = degree + 1;
-	// Omits last set of control points if not a complete set.
-	const size_t num_segments = points.size() / order;
 	std::vector<Point> split_segments;
-	if (num_segments == 0 || segment_id < 1 || segment_id > num_segments) {
+	if (!IsSegmentDataValid(points, order, segment_id)) {
 		return split_segments;
 	}
 
@@ -404,19 +317,28 @@ std::vector<Point> SplitSegment(const std::vector<Point>& points, size_t segment
 	Eigen::Matrix<Scalar, order, order> M = bezier::GetPowerCoefficients<Scalar, degree>();
 	Eigen::Matrix<Scalar, order, order> M1 = M.inverse();
 	Eigen::Matrix<Scalar, order, order> Q = M1 * Z * M;
-	Eigen::Matrix<Scalar, order, order> Q1 = Q.colwise().reverse();
-	Q1.rowwise().reverseInPlace();
-	result = Q * P;
+	Eigen::Matrix<Scalar, order, order> Q1;
+	Q1.setZero();
+	for (size_t i = 0; i < order; ++i) {
+		Q1.block(order - (i + 1), order - (i + 1), 1, i + 1) = Q.block(i, 0, 1, i + 1);
+	}
+
+	Eigen::Matrix<Scalar, order, dimension> result = Q * P;
 	Point point;
-	for (size_t i = 0; i < dimension; ++i) {
-		point[i] = result(i, 0);
+	for (size_t i = 0; i < order; ++i) {
+		for (size_t j = 0; j < dimension; ++j) {
+			point[j] = result(i, j);
+		}
+		split_segments.push_back(point);
 	}
-	split_segments.push_back(point);
+
 	result = Q1 * P;
-	for (size_t i = 0; i < dimension; ++i) {
-		point[i] = result(i, 0);
+	for (size_t i = 0; i < order; ++i) {
+		for (size_t j = 0; j < dimension; ++j) {
+			point[j] = result(i, j);
+		}
+		split_segments.push_back(point);
 	}
-	split_segments.push_back(point);
 
 	return split_segments;
 }

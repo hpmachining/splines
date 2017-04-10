@@ -24,6 +24,9 @@
     <ClInclude Include="splines.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SplineHelper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
