@@ -20,13 +20,13 @@ void WriteFile(const std::string& file, const Eigen::Matrix<Scalar, rows, cols>&
 }
 
 template <typename Scalar, size_t degree>
-Eigen::DiagonalMatrix<Scalar, degree> FillElevationMatrix() {
+Eigen::Matrix<Scalar, degree, 1> FillElevationMatrix() {
 	const size_t order = degree + 1;
-	Eigen::DiagonalMatrix<Scalar, degree> column;
+	Eigen::Matrix<Scalar, degree, 1> column;
 	for (size_t i = 0; i < degree; ++i) {
 		Scalar j = i + 1;
 		Scalar entry = j / order;
-		column()[i] = entry;
+		column(i, 0) = entry;
 	}
 	return column;
 }
@@ -56,20 +56,21 @@ void TestDegreeElevation() {
 			P(p, j) = points[i][j];
 		}
 	}
-	RowVector M1 = FillElevationMatrix<double, degree>();
-	RowVector M2;
+	Eigen::Matrix<double, degree, 1> M1 = FillElevationMatrix<double, degree>();
+	Eigen::Matrix<double, degree, 1> M2;
 	M2.setOnes();
 	M2 -= M1;
 	point = P.block(0, 0, dimension, 1);
 	elevated_points.push_back(point);
 	Eigen::Matrix<double, degree, dimension> P1;
 	Eigen::Matrix<double, degree, dimension> P2;
-	Eigen::Matrix<double, degree, 1> b;
+	Eigen::Matrix<double, degree, dimension> b;
 	P1 = P.block(0, 0, dimension, dimension);
 	P2 = P.block(1, 0, dimension, dimension);
-	b = M1 * P1;// +(M2 * P2);
+	b = (M1.array() * P1);// +(M2.row(0).array() * P2.row(0).array());
 	std::cout << M1 << "\n\n" << M2 << "\n\n";
 	std::cout << "P1\n" << P1 << "\n\n" << "P2\n" << P2 << "\n\n";
+	//std::cout << "b\n" << b << "\n\n";
 	for (size_t i = 0; i < b.size(); ++i) {
 		point << b.block(i, 0, dimension, 1);
 		elevated_points.push_back(point);
