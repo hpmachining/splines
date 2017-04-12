@@ -39,20 +39,26 @@ void TestDegreeElevation() {
 
 	// Read control points from file
 	Point point;
-	std::vector<Point> points;
+	std::vector<Point, Eigen::aligned_allocator<Point>> points;
 	while (std::cin >> point.x() >> point.y() >> point.z()) {
 		points.push_back(point);
 	}
 
 	// Create and fill Eigen::Matrix with control points for specified segment
+	//Eigen::Matrix<double, order, dimension, Eigen::RowMajor> P;
 	Eigen::Matrix<double, order, dimension> P;
 	for (size_t i = 0; i < points.size() / order; ++i) {
 		const size_t segment_index = i * order;
-		for (size_t j = segment_index, p = 0; j < segment_index + order; ++j, ++p) {
-			for (size_t k = 0; k < dimension; ++k) {
-				P(p, k) = points[j][k];
-			}
-		}
+		P.block(0, 0, order, dimension) =
+			Eigen::Map<Eigen::Matrix<double, order, dimension, Eigen::RowMajor>>(points[segment_index].data(), order, dimension);
+		//std::cout << "P mapped:\n" << P << "\n\n";
+		//for (size_t j = segment_index, p = 0; j < segment_index + order; ++j, ++p) {
+		//	for (size_t k = 0; k < dimension; ++k) {
+		//		P(p, k) = points[j][k];
+		//	}
+		//}
+		//std::cout << "P looped:\n" << P << "\n\n";
+
 		// First point stays the same so add to elevated points
 		std::vector<Point> elevated_points;
 		point = P.block(0, 0, 1, dimension).transpose();
@@ -64,10 +70,10 @@ void TestDegreeElevation() {
 		M2.setOnes();
 		M2 -= M1;
 		Eigen::Matrix<double, degree, dimension> Q;
-		Q = (M1.array().rowwise() * P.array()) + (M2.array().rowwise() * P.array());
-		//for (size_t i = 0; i < degree; ++i) {
-		//	Q.block(i, 0, 1, dimension) = (M1.row(i) * P.row(i)) + (M2.row(i) * P.row(i + 1));
-		//}
+		//Q = (M1.array().rowwise() * P.array()) + (M2.array().rowwise() * P.array());
+		for (size_t i = 0; i < degree; ++i) {
+			Q.block(i, 0, 1, dimension) = (M1.row(i) * P.row(i)) + (M2.row(i) * P.row(i + 1));
+		}
 
 		// Add new control points to elevated points
 		for (size_t j = 0; j < degree; ++j) {
