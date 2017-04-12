@@ -19,22 +19,10 @@ void WriteFile(const std::string& file, const Eigen::Matrix<RealScalar, rows, co
 	file << out;
 }
 
-template <typename RealScalar, size_t degree>
-Eigen::Matrix<RealScalar, degree, 1> FillElevationMatrix() {
-	const size_t order = degree + 1;
-	Eigen::Matrix<RealScalar, degree, 1> column;
-	for (size_t i = 0; i < degree; ++i) {
-		RealScalar j = i + 1.0;
-		RealScalar entry = j / order;
-		column(i, 0) = entry;
-	}
-	return column;
-}
-
 void TestDegreeElevation() {
 	using Point = Eigen::Vector3d;
 	const size_t dimension = 3; // 2d or 3d points
-	const size_t degree = 3;
+	const size_t degree = 4;
 	const size_t order = degree + 1;
 
 	// Read control points from file
@@ -44,46 +32,30 @@ void TestDegreeElevation() {
 		points.push_back(point);
 	}
 
-	// Create and fill Eigen::Matrix with control points for specified segment
-	//Eigen::Matrix<double, order, dimension, Eigen::RowMajor> P;
-	Eigen::Matrix<double, order, dimension> P;
 	for (size_t i = 0; i < points.size() / order; ++i) {
 		const size_t segment_index = i * order;
-		P.block(0, 0, order, dimension) =
-			Eigen::Map<Eigen::Matrix<double, order, dimension, Eigen::RowMajor>>(points[segment_index].data(), order, dimension);
-		//std::cout << "P mapped:\n" << P << "\n\n";
-		//for (size_t j = segment_index, p = 0; j < segment_index + order; ++j, ++p) {
-		//	for (size_t k = 0; k < dimension; ++k) {
-		//		P(p, k) = points[j][k];
-		//	}
-		//}
-		//std::cout << "P looped:\n" << P << "\n\n";
+
+		// Create and fill Eigen::Matrix with control points for specified segment
+		Eigen::Matrix<double, order, dimension> P = Eigen::Map<Eigen::Matrix<double, order, dimension, Eigen::RowMajor>>
+			(points[segment_index].data(), order, dimension);
 
 		// First point stays the same so add to elevated points
 		std::vector<Point> elevated_points;
-		point = P.block(0, 0, 1, dimension).transpose();
-		elevated_points.push_back(point);
+		elevated_points.push_back(P.row(0).transpose());
 
 		// Calculate the new control points
-		Eigen::Matrix<double, degree, 1> M1 = FillElevationMatrix<double, degree>();
-		Eigen::Matrix<double, degree, 1> M2;
-		M2.setOnes();
-		M2 -= M1;
-		Eigen::Matrix<double, degree, dimension> Q;
-		//Q = (M1.array().rowwise() * P.array()) + (M2.array().rowwise() * P.array());
-		for (size_t i = 0; i < degree; ++i) {
-			Q.block(i, 0, 1, dimension) = (M1.row(i) * P.row(i)) + (M2.row(i) * P.row(i + 1));
-		}
+		Eigen::Matrix<double, degree, 1> M1(Eigen::Matrix<double, degree, 1>::LinSpaced(degree, (1.0 / order),
+			static_cast<double>(degree) / order));
+		Eigen::Matrix<double, degree, dimension> Q =
+			(M1.asDiagonal() * P.topRows<degree>()) + (M1.reverse().asDiagonal() * P.bottomRows<degree>());
 
 		// Add new control points to elevated points
 		for (size_t j = 0; j < degree; ++j) {
-			point = Q.block(j, 0, 1, dimension).transpose();
-			elevated_points.push_back(point);
+			elevated_points.push_back(Q.row(j).transpose());
 		}
 
 		// Last point stays the same so add to elevated points
-		point = P.block(dimension, 0, 1, dimension).transpose();
-		elevated_points.push_back(point);
+		elevated_points.push_back(P.row(degree).transpose());
 
 		// Output elevated points
 		size_t k = 0;

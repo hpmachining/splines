@@ -41,6 +41,9 @@ Point CalculateNormal(const std::vector<Point>& points, const size_t segment_id,
 template <typename Scalar, Dimension dimension, size_t degree, typename Point>
 std::vector<Point> SplitSegment(const std::vector<Point>& points, const size_t segment_id, const Scalar t);
 
+template <typename Scalar, Dimension dimension, size_t degree, typename Point>
+std::vector<Point> ElevateDegree(const std::vector<Point>& points);
+
 /**
 @brief	Calculate the coefficients derived from a segment of a composite Bézier curve.
 
@@ -341,6 +344,42 @@ std::vector<Point> SplitSegment(const std::vector<Point>& points, const size_t s
 	}
 
 	return split_segments;
+}
+
+template <typename Scalar, Dimension dimension, size_t degree, typename Point>
+std::vector<Point> ElevateDegree(const std::vector<Point>& points) {
+	const size_t order = degree + 1;
+
+	// Create and fill Eigen::Matrix with control points for specified segment
+	Eigen::Matrix<double, order, dimension> P;
+	for (size_t i = 0; i < points.size() / order; ++i) {
+		const size_t segment_index = i * order;
+		//P.block(0, 0, order, dimension) =
+		P =
+			Eigen::Map<Eigen::Matrix<double, order, dimension, Eigen::RowMajor>>(points[segment_index].data(), order, dimension);
+
+		// First point stays the same so add to elevated points
+		std::vector<Point> elevated_points;
+		point = P.block(0, 0, 1, dimension).transpose();
+		elevated_points.push_back(point);
+
+		// Calculate the new control points
+		Eigen::Matrix<double, degree, 1> M1(Eigen::Matrix<double, degree, 1>::LinSpaced(degree, (1.0 / order),
+			static_cast<double>(degree) / order));
+		Eigen::Matrix<double, degree, dimension> Q =
+			(M1.asDiagonal() * P.topRows<degree>()) + (M1.reverse().asDiagonal() * P.bottomRows<degree>());
+
+		// Add new control points to elevated points
+		for (size_t j = 0; j < degree; ++j) {
+			point = Q.block(j, 0, 1, dimension).transpose();
+			elevated_points.push_back(point);
+		}
+
+		// Last point stays the same so add to elevated points
+		point = P.block(degree, 0, 1, dimension).transpose();
+		elevated_points.push_back(point);
+		return elevated_points;
+	}
 }
 
 }	// end namespace bezier
