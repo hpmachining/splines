@@ -3,4 +3,4 @@
 
 #include "Funcs.h"
 
-int SplineData();
+int TestSplineLibrary();

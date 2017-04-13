@@ -272,7 +272,7 @@ namespace UnitTest1
 		{
 			//using Point = Eigen::Vector3d;
 			using Point = std::array<double, 3>;
-			std::ifstream in_file("cubic3d.dat");
+			std::ifstream in_file("cubic.dat");
 			Assert::IsTrue(in_file.is_open());
 			std::ofstream out_file("cubic3dtan.points");
 			Point control_point;

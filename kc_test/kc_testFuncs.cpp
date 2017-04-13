@@ -2,6 +2,7 @@
 //
 
 #include "stdafx.h"
+#include <cmath>
 #include "funcs.h"
 #include "ck_sdk.h"
 #include "KCSdkUtilities.h"
@@ -11,13 +12,13 @@
 
 const double MIN_TOL = .00005;
 
-int SplineData() {
+int TestSplineLibrary() {
 	int status = CKNoError;
 	CKPart part = CKGetActivePart();
 	if (!part.IsValid()) {
 		return CK_NO_PART;
 	}
-	CKSCoordArray ctrlPoints;   // Holds the 4 control points for entire segment
+	CKSCoordArray control_points;   // Holds the 4 control points for entire segment
 	CKSEntity spline = SplineSelect(part);
 	if (!spline.IsValid()) {
 		MessageBox(nullptr, _T("Error with spline selection"), _T("Spline Data"), MB_OK_STOP);
@@ -55,38 +56,55 @@ int SplineData() {
 					}
 				}
 			}
-			GetSplineControlPoints(param, ctrlPoints);
+			GetSplineControlPoints(param, control_points);
 		}
-		CKSCoordArray elevated_points = bezier::ElevateDegree<double, bezier::Dimension::k3d, 3>(ctrlPoints);
-		for (size_t i = 0; i < elevated_points.size(); ++i) {
-			part.AddPoint(elevated_points[i]);
+
+		//// Works
+		//CKSCoordArray elevated_points = bezier::ElevateDegree<double, bezier::Dimension::k3d, 3>(control_points);
+		//for (size_t i = 0; i < elevated_points.size(); ++i) {
+		//	part.AddPoint(elevated_points[i]);
+		//}
+
+		//// Works with calculate coefficients reversed
+		//CKSCoordArray split_points = bezier::SplitSegment<double, bezier::k3d, 3>(control_points, 1, .5);
+		//for (auto i : split_points) {
+		//	part.AddPoint(i);
+		//}
+		//for (size_t i = 0; i < 2; ++i) {
+		//	std::vector<double> new_coeff = bezier::CalculateCoefficients<double, bezier::k3d, 3>(split_points, i + 1);
+		//	part.AddSpline(true, false, new_coeff);
+		//}
+
+		// Test tangent and normal functions. Works
+		CKSCoord coordinate;
+		CKSCoord tangent;
+		CKSCoord normal;
+		for (size_t i = 1; i <= control_points.size() / 4; ++i) {
+			coordinate = bezier::CalculateCoordinate<double, bezier::k3d, 3>(control_points, i, .25);
+			part.AddPoint(coordinate);
+			tangent = bezier::CalculateTangent<double, bezier::k3d, 3>(control_points, i, .25);
+			normal = bezier::CalculateNormal<double, bezier::k3d, 3>(control_points, i, .25);
+			tangent.Normalize();
+			normal.Normalize();
+			CKSMatrix temp;
+			CKSMath::MatrixVector(coordinate, coordinate + tangent, temp);
+			CKEntityAttrib attrib;
+			attrib.m_ucColorNumber = 7;
+			part.AddVector(1.0, &temp, &attrib);
+			attrib.m_ucColorNumber = 10;
+			CKSMath::MatrixVector(coordinate, coordinate + normal, temp);
+			part.AddVector(1.0, &temp, &attrib);
+			//part.AddLine(coordinate, coordinate + tangent);
+			//part.AddLine(coordinate, coordinate + normal);
 		}
-		CKSCoordArray split_points = bezier::SplitSegment<double, bezier::k3d, 3>(ctrlPoints, 1, .75);
-		std::vector<double> point_coefficients = bezier::CalculateCoefficients<double, bezier::k3d, 3>(ctrlPoints, 1);
-		std::vector<double> new_coeff(12);
-		for (size_t i = 0; i < point_coefficients.size() / 4; i += 4) {
-			new_coeff[i] = point_coefficients[i];
-			new_coeff[i + 1] = point_coefficients[i + 3];
-			new_coeff[i + 2] = point_coefficients[i + 6];
-			new_coeff[i + 3] = point_coefficients[i + 9];
-		}
-		part.AddSpline(true, false, new_coeff);
-		point_coefficients = bezier::CalculateCoefficients<double, bezier::k3d, 3>(ctrlPoints, 2);
-		for (size_t i = 0; i < point_coefficients.size() / 4; i += 4) {
-			new_coeff[i] = point_coefficients[i];
-			new_coeff[i + 1] = point_coefficients[i + 3];
-			new_coeff[i + 2] = point_coefficients[i + 6];
-			new_coeff[i + 3] = point_coefficients[i + 9];
-		}
-		part.AddSpline(true, false, new_coeff);
 		part.NoteState();
-		WriteData("nodes.dat", nodePoints);
-		WriteCoefficients("coeff.dat", coeffs);
-		WriteControlPoints("ctrl.dat", ctrlPoints);
-		CKSCoordArray fitPoints;
-		SplineToPoints(part, spline, fitPoints);
-		WriteData("spline.dat", fitPoints);
-		fitPoints.clear();
+		//WriteData("nodes.dat", nodePoints);
+		//WriteCoefficients("coeff.dat", coeffs);
+		//WriteControlPoints("ctrl.dat", control_points);
+		//CKSCoordArray fitPoints;
+		//SplineToPoints(part, spline, fitPoints);
+		//WriteData("spline.dat", fitPoints);
+		//fitPoints.clear();
 	}
 	return status;
 }

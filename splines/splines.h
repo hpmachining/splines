@@ -87,8 +87,8 @@ std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points, cons
 	// Calculate the coefficients
 	Eigen::Matrix<Scalar, order, dimension> result;
 	result = basis * control_points;
-	for (auto p = 0; p < result.rows(); ++p) {
-		for (auto q = 0; q < result.cols(); ++q) {
+	for (size_t p = 0; p < result.rows(); ++p) {
+		for (size_t q = 0; q < result.cols(); ++q) {
 			coefficients.push_back(result(p, q));
 		}
 	}

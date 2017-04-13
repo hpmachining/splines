@@ -7,8 +7,8 @@
   <PropertyGroup Label="UserMacros">
     <KCDINSTALL>D:\KeyCreatord64.15.0</KCDINSTALL>
     <KCDINSTALL32>D:\KeyCreatord15.0</KCDINSTALL32>
-    <KCINSTALL>D:\KeyCreator64.15.0</KCINSTALL>
-    <KCINSTALL32>D:\KeyCreator15.0</KCINSTALL32>
+    <KCINSTALL>C:\KeyCreator64.15.0</KCINSTALL>
+    <KCINSTALL32>C:\KeyCreator15.0</KCINSTALL32>
   </PropertyGroup>
   <PropertyGroup />
   <ItemDefinitionGroup />

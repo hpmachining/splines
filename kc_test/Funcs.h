@@ -1,5 +1,5 @@
 // Function declarations for kc_testFuncs.cpp
 //
 
-int SplineData();
+int TestSplineLibrary();
 

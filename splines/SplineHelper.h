@@ -35,7 +35,7 @@ Eigen::Matrix<Scalar, degree, degree> GetTangentCoefficients() {
 		coefficients.diagonal()[i] = i + 1;
 	}
 	basis = coefficients;
-	basis.colwise().reverseInPlace();
+	basis.rowwise().reverseInPlace();
 	return basis;
 }
 
@@ -45,8 +45,8 @@ Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> GetPowerCoefficients() {
 	Eigen::Matrix<Scalar, order, order> coefficients = GetBinomialCoefficients<Scalar, degree>();
 	for (int i = 1; i < order; ++i) {
 		for (int j = 0; j < order - i; ++j) {
-			Scalar cell = -(coefficients(i + j, j + 1) / i * (j + 1));
-			coefficients(i + j, j) = cell;
+			Scalar element = -(coefficients(i + j, j + 1) / i * (j + 1));
+			coefficients(i + j, j) = element;
 		}
 	}
 	return coefficients;

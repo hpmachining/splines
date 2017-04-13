@@ -5,12 +5,12 @@
 
 
 // Data Section
-static const CDE_data CDE_FUN_SplineData[] =
+static const CDE_data CDE_FUN_TestSplineLibrary[] =
     {
-    _T("SplineData"),               // name
+    _T("TestSplineLibrary"),        // name
     NULL,
     1,                              // # of parameters
-        _T("SplineData"),           // function name
+        _T("TestSplineLibrary"),    // function name
         _T(""),                     // array size
         CDE_INT,                    // return value type
     };
@@ -18,25 +18,25 @@ static const CDE_data CDE_FUN_SplineData[] =
 
 static const CDE_data *Data[] =
     {
-    CDE_FUN_SplineData,
+    CDE_FUN_TestSplineLibrary,
     };
 
 
 
 // Function Section
-static const CDE_code CDE_SplineData = 
+static const CDE_code CDE_TestSplineLibrary = 
     {
-    _T("SplineData"),               // Function name
+    _T("TestSplineLibrary"),        // Function name
     NULL,                           // (Not hidden)
     NULL,                           // (No alias)
     CDE_ANY,                        // Flags
-    CDE_FUN_SplineData,             // Parameter list
-    (int (*)())SplineData,          // Function Pointer
+    CDE_FUN_TestSplineLibrary,      // Parameter list
+    (int (*)())TestSplineLibrary,   // Function Pointer
     };
 
 
 static const CDE_code *Functions[] = {
-    &CDE_SplineData,
+    &CDE_TestSplineLibrary,
 };
 
 
