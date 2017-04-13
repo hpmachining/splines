@@ -351,16 +351,24 @@ std::vector<Point> ElevateDegree(const std::vector<Point>& points) {
 	const size_t order = degree + 1;
 
 	// Create and fill Eigen::Matrix with control points for specified segment
+	std::vector<Point> elevated_points;
 	Eigen::Matrix<double, order, dimension> P;
 	for (size_t i = 0; i < points.size() / order; ++i) {
 		const size_t segment_index = i * order;
-		//P.block(0, 0, order, dimension) =
-		P =
-			Eigen::Map<Eigen::Matrix<double, order, dimension, Eigen::RowMajor>>(points[segment_index].data(), order, dimension);
+		//P = Eigen::Map<Eigen::Matrix<double, order, dimension, Eigen::RowMajor>>
+		//	(points[segment_index].data(), order, dimension);
+		for (size_t j = segment_index, p = 0; j < segment_index + order; ++j, ++p) {
+			for (size_t k = 0; k < dimension; ++k) {
+				P(p, k) = points[j][k];
+			}
+		}
 
 		// First point stays the same so add to elevated points
-		std::vector<Point> elevated_points;
-		point = P.block(0, 0, 1, dimension).transpose();
+		//Point point = P.block(0, 0, 1, dimension).transpose();
+		Point point;
+		for (size_t j = 0; j < dimension; ++j) {
+			point[j] = P(0, j);
+		}
 		elevated_points.push_back(point);
 
 		// Calculate the new control points
@@ -371,15 +379,21 @@ std::vector<Point> ElevateDegree(const std::vector<Point>& points) {
 
 		// Add new control points to elevated points
 		for (size_t j = 0; j < degree; ++j) {
-			point = Q.block(j, 0, 1, dimension).transpose();
+			//point = Q.block(j, 0, 1, dimension).transpose();
+			for (size_t k = 0; k < dimension; ++k) {
+				point[k] = Q(j, k);
+			}
 			elevated_points.push_back(point);
 		}
 
 		// Last point stays the same so add to elevated points
-		point = P.block(degree, 0, 1, dimension).transpose();
+		for (size_t j = 0; j < dimension; ++j) {
+			point[j] = P(degree, j);
+		}
+		//point = P.block(degree, 0, 1, dimension).transpose();
 		elevated_points.push_back(point);
-		return elevated_points;
 	}
+	return elevated_points;
 }
 
 }	// end namespace bezier

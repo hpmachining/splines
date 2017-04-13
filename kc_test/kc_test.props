@@ -1,0 +1,53 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ImportGroup Label="User Property Sheet" />
+  <PropertyGroup>
+    <_PropertySheetDisplayName>kc_test Property Sheet</_PropertySheetDisplayName>
+  </PropertyGroup>
+  <PropertyGroup Label="UserMacros">
+    <KCDINSTALL>D:\KeyCreatord64.15.0</KCDINSTALL>
+    <KCDINSTALL32>D:\KeyCreatord15.0</KCDINSTALL32>
+    <KCINSTALL>D:\KeyCreator64.15.0</KCINSTALL>
+    <KCINSTALL32>D:\KeyCreator15.0</KCINSTALL32>
+  </PropertyGroup>
+  <PropertyGroup />
+  <ItemDefinitionGroup />
+  <ItemGroup>
+    <BuildMacro Include="KCDINSTALL">
+      <Value>$(KCDINSTALL)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="KCDINSTALL32">
+      <Value>$(KCDINSTALL32)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="KCINSTALL">
+      <Value>$(KCINSTALL)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="KCINSTALL32">
+      <Value>$(KCINSTALL32)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+  </ItemGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LocalDebuggerCommand>$(KCDINSTALL)\kc.exe</LocalDebuggerCommand>
+    <LocalDebuggerWorkingDirectory>$(KCDINSTALL)</LocalDebuggerWorkingDirectory>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LocalDebuggerCommand>$(KCDINSTALL32)\kc.exe</LocalDebuggerCommand>
+    <LocalDebuggerWorkingDirectory>$(KCDINSTALL32)</LocalDebuggerWorkingDirectory>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LocalDebuggerCommand>$(KCINSTALL)\kc.exe</LocalDebuggerCommand>
+    <LocalDebuggerWorkingDirectory>$(KCINSTALL)</LocalDebuggerWorkingDirectory>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LocalDebuggerCommand>$(KCINSTALL32)\kc.exe</LocalDebuggerCommand>
+    <LocalDebuggerWorkingDirectory>$(KCINSTALL32)</LocalDebuggerWorkingDirectory>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
+</Project>
