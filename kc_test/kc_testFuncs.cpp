@@ -65,38 +65,39 @@ int TestSplineLibrary() {
 		//	part.AddPoint(elevated_points[i]);
 		//}
 
-		//// Works with calculate coefficients reversed
-		//CKSCoordArray split_points = bezier::SplitSegment<double, bezier::k3d, 3>(control_points, 1, .5);
-		//for (auto i : split_points) {
-		//	part.AddPoint(i);
-		//}
-		//for (size_t i = 0; i < 2; ++i) {
-		//	std::vector<double> new_coeff = bezier::CalculateCoefficients<double, bezier::k3d, 3>(split_points, i + 1);
-		//	part.AddSpline(true, false, new_coeff);
-		//}
-
-		// Test tangent and normal functions. Works
-		CKSCoord coordinate;
-		CKSCoord tangent;
-		CKSCoord normal;
-		for (size_t i = 1; i <= control_points.size() / 4; ++i) {
-			coordinate = bezier::CalculateCoordinate<double, bezier::k3d, 3>(control_points, i, .25);
-			part.AddPoint(coordinate);
-			tangent = bezier::CalculateTangent<double, bezier::k3d, 3>(control_points, i, .25);
-			normal = bezier::CalculateNormal<double, bezier::k3d, 3>(control_points, i, .25);
-			tangent.Normalize();
-			normal.Normalize();
-			CKSMatrix temp;
-			CKSMath::MatrixVector(coordinate, coordinate + tangent, temp);
-			CKEntityAttrib attrib;
-			attrib.m_ucColorNumber = 7;
-			part.AddVector(1.0, &temp, &attrib);
-			attrib.m_ucColorNumber = 10;
-			CKSMath::MatrixVector(coordinate, coordinate + normal, temp);
-			part.AddVector(1.0, &temp, &attrib);
-			//part.AddLine(coordinate, coordinate + tangent);
-			//part.AddLine(coordinate, coordinate + normal);
+		// Works with calculate coefficients reversed
+		CKSCoordArray split_points = bezier::SplitSegment<double, bezier::k3d, 3>(control_points, 1, .5);
+		for (auto i : split_points) {
+			part.AddPoint(i);
 		}
+		for (size_t i = 0; i < 2; ++i) {
+			std::vector<double> new_coeff = bezier::CalculateCoefficients<double, bezier::k3d, 3>(split_points, i + 1);
+			std::vector<double> kc_coeff = bezier::ConvertCoefficientLayoutToKC<double, bezier::k3d, 3>(new_coeff);
+			part.AddSpline(true, false, kc_coeff);
+		}
+
+		//// Test tangent and normal functions. Works
+		//CKSCoord coordinate;
+		//CKSCoord tangent;
+		//CKSCoord normal;
+		//for (size_t i = 1; i <= control_points.size() / 4; ++i) {
+		//	coordinate = bezier::CalculateCoordinate<double, bezier::k3d, 3>(control_points, i, .25);
+		//	part.AddPoint(coordinate);
+		//	tangent = bezier::CalculateTangent<double, bezier::k3d, 3>(control_points, i, .25);
+		//	normal = bezier::CalculateNormal<double, bezier::k3d, 3>(control_points, i, .25);
+		//	tangent.Normalize();
+		//	normal.Normalize();
+		//	CKSMatrix temp;
+		//	CKSMath::MatrixVector(coordinate, coordinate + tangent, temp);
+		//	CKEntityAttrib attrib;
+		//	attrib.m_ucColorNumber = 7;
+		//	part.AddVector(1.0, &temp, &attrib);
+		//	attrib.m_ucColorNumber = 10;
+		//	CKSMath::MatrixVector(coordinate, coordinate + normal, temp);
+		//	part.AddVector(1.0, &temp, &attrib);
+		//	//part.AddLine(coordinate, coordinate + tangent);
+		//	//part.AddLine(coordinate, coordinate + normal);
+		//}
 		part.NoteState();
 		//WriteData("nodes.dat", nodePoints);
 		//WriteCoefficients("coeff.dat", coeffs);

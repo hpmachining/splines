@@ -17,14 +17,6 @@ A collection of templated functions for working with Bézier curves.
 
 namespace bezier {
 
-/** Specifies the coordinate dimension */
-enum Dimension {
-	/** 2d coordinates \f$(x, y)\f$ */
-	k2d = 2,
-	/** 3d coordinates \f$(x, y, z)\f$ */
-	k3d
-};
-
 
 template <typename Scalar, Dimension dimension, size_t degree, typename Point>
 std::vector<Scalar> CalculateCoefficients(const std::vector<Point>& points, const size_t segment_id);

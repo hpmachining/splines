@@ -7,6 +7,14 @@
 
 namespace bezier {
 
+/** Specifies the coordinate dimension */
+enum Dimension {
+	/** 2d coordinates \f$(x, y)\f$ */
+	k2d = 2,
+	/** 3d coordinates \f$(x, y, z)\f$ */
+	k3d
+};
+
 //template <typename Point>
 //bool IsSegmentDataValid(const std::vector<Point>& points, size_t order, const size_t segment_id);
 //
@@ -62,5 +70,30 @@ Eigen::DiagonalMatrix<Scalar, Eigen::Dynamic> GetBinomialCoefficients() {
 		coefficients.diagonal()[i + 1] = coefficients.diagonal()[i] * (degree - i) / (i + 1);
 	}
 	return coefficients;
+}
+
+template<typename Scalar, Dimension dimension, size_t degree>
+std::vector<Scalar> ConvertCoefficientLayoutToKC(const std::vector<Scalar>& coefficients) {
+	std::vector<Scalar> sorted;
+	const size_t order = degree + 1;
+	const size_t segment_size = (degree + 1) * dimension;
+	if (coefficients.size() % segment_size != 0) {
+		return sorted;
+	}
+	//sorted.resize(coefficients.size());
+	for (size_t i = 0; i < coefficients.size() / segment_size; ++i) {
+		Eigen::Matrix<Scalar, order, dimension> segment_coefficients;
+		for (size_t j = 0; j < segment_size / dimension; ++j) {
+			for (size_t k = 0; k < dimension; ++k) {
+				segment_coefficients(j, k) = coefficients[(i * segment_size) + (j * dimension) + k];
+			}
+		}
+		for (size_t p = 0; p < segment_coefficients.cols(); ++p) {
+			for (size_t q = 0; q < segment_coefficients.rows(); ++q) {
+				sorted.push_back(segment_coefficients(q, p));
+			}
+		}
+	}
+	return sorted;
 }
 } // end namespace bezier
