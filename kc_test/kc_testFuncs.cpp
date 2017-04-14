@@ -66,13 +66,14 @@ int TestSplineLibrary() {
 		//}
 
 		// Works with calculate coefficients reversed
+		const size_t degree = 3;
 		CKSCoordArray split_points = bezier::SplitSegment<double, bezier::k3d, 3>(control_points, 1, .5);
 		for (auto i : split_points) {
 			part.AddPoint(i);
 		}
 		for (size_t i = 0; i < 2; ++i) {
-			std::vector<double> new_coeff = bezier::CalculateCoefficients<double, bezier::k3d, 3>(split_points, i + 1);
-			std::vector<double> kc_coeff = bezier::ConvertCoefficientLayoutToKC<double, bezier::k3d, 3>(new_coeff);
+			std::vector<double> new_coeff = bezier::CalculateCoefficients<double>(split_points, degree, bezier::k3d, i + 1);
+			std::vector<double> kc_coeff = bezier::ConvertCoefficientLayoutToKC<double>(new_coeff, degree, bezier::k3d);
 			part.AddSpline(true, false, kc_coeff);
 		}
 

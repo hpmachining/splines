@@ -78,7 +78,7 @@ void TestMatrix() {
 	Eigen::Matrix4d lh;
 	Eigen::Matrix4d rh;
 
-	Eigen::Matrix<double, order, order> test = bezier::GetPowerCoefficients<double, degree>();
+	Eigen::Matrix<double, order, order> test = bezier::GetPowerCoefficients<double>(degree);
 	std::cout << test << '\n';
 
 	Point point;

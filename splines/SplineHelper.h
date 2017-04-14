@@ -15,30 +15,34 @@ enum Dimension {
 	k3d
 };
 
+using Eigen::Dynamic;
+
 //template <typename Point>
 //bool IsSegmentDataValid(const std::vector<Point>& points, size_t order, const size_t segment_id);
 //
-//template <typename Scalar, size_t degree>
-//Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> GetPowerCoefficients();
+//template <typename RealScalar, size_t degree>
+//Eigen::Matrix<RealScalar, Eigen::Dynamic, Eigen::Dynamic> GetPowerCoefficients();
 //
-//template <typename Scalar, size_t degree>
-//Eigen::Matrix<Scalar, degree, degree> GetTangentCoefficients();
+//template <typename RealScalar, size_t degree>
+//Eigen::Matrix<RealScalar, degree, degree> GetTangentCoefficients();
 //
-//template <typename Scalar, size_t degree>
-//Eigen::DiagonalMatrix<Scalar, Eigen::Dynamic> GetBinomialCoefficients();
+//template <typename RealScalar, size_t degree>
+//Eigen::DiagonalMatrix<RealScalar, Eigen::Dynamic> GetBinomialCoefficients();
 
 
 template <typename Point>
-bool IsSegmentDataValid(const std::vector<Point>& points, size_t order, const size_t segment_id) {
+bool IsSegmentDataValid(const std::vector<Point>& points, const size_t order, const size_t segment_id) {
 	// Omits the last set of control points if not a complete set.
 	const size_t num_segments = points.size() / order;
 	return  (num_segments > 0 && segment_id > 0 && segment_id <= num_segments);
 }
 
-template <typename Scalar, size_t degree>
-Eigen::Matrix<Scalar, degree, degree> GetTangentCoefficients() {
-	Eigen::Matrix<Scalar, degree, degree> basis;
-	Eigen::DiagonalMatrix<Scalar, degree> coefficients;
+template <typename RealScalar>
+Eigen::Matrix<RealScalar, Dynamic, Dynamic> GetTangentCoefficients(const size_t degree) {
+	Eigen::Matrix<RealScalar, Dynamic, Dynamic> basis;
+	basis.resize(degree, degree);
+	Eigen::DiagonalMatrix<RealScalar, Dynamic> coefficients;
+	coefficients.resize(degree);
 	for (auto i = 0; i < degree; ++i) {
 		coefficients.diagonal()[i] = i + 1;
 	}
@@ -47,49 +51,52 @@ Eigen::Matrix<Scalar, degree, degree> GetTangentCoefficients() {
 	return basis;
 }
 
-template <typename Scalar, size_t degree>
-Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> GetPowerCoefficients() {
+template <typename RealScalar>
+Eigen::Matrix<RealScalar, Eigen::Dynamic, Eigen::Dynamic> GetPowerCoefficients(const size_t degree) {
 	const size_t order = degree + 1;
-	Eigen::Matrix<Scalar, order, order> coefficients = GetBinomialCoefficients<Scalar, degree>();
-	for (int i = 1; i < order; ++i) {
-		for (int j = 0; j < order - i; ++j) {
-			Scalar element = -(coefficients(i + j, j + 1) / i * (j + 1));
+	Eigen::Matrix<RealScalar, Eigen::Dynamic, Eigen::Dynamic> coefficients;
+	coefficients.resize(order, order);
+	coefficients = GetBinomialCoefficients<RealScalar>(degree);
+	for (size_t i = 1; i < order; ++i) {
+		for (size_t j = 0; j < order - i; ++j) {
+			RealScalar element = -(coefficients(i + j, j + 1) / i * (j + 1));
 			coefficients(i + j, j) = element;
 		}
 	}
 	return coefficients;
 }
 
-template<typename Scalar, size_t degree>
-Eigen::DiagonalMatrix<Scalar, Eigen::Dynamic> GetBinomialCoefficients() {
+template<typename RealScalar>
+Eigen::DiagonalMatrix<RealScalar, Eigen::Dynamic> GetBinomialCoefficients(const size_t degree) {
 	const size_t order = degree + 1;
-	Eigen::DiagonalMatrix<Scalar, Eigen::Dynamic> coefficients;
+	Eigen::DiagonalMatrix<RealScalar, Eigen::Dynamic> coefficients;
 	coefficients.resize(order);
 	coefficients.diagonal()[0] = 1;
-	for (int i = 0; i < degree; ++i) {
+	for (size_t i = 0; i < degree; ++i) {
 		coefficients.diagonal()[i + 1] = coefficients.diagonal()[i] * (degree - i) / (i + 1);
 	}
 	return coefficients;
 }
 
-template<typename Scalar, Dimension dimension, size_t degree>
-std::vector<Scalar> ConvertCoefficientLayoutToKC(const std::vector<Scalar>& coefficients) {
-	std::vector<Scalar> sorted;
+template<typename RealScalar>
+std::vector<RealScalar> ConvertCoefficientLayoutToKC(const std::vector<RealScalar>& coefficients,
+	const size_t degree, const size_t dimension) {
+	std::vector<RealScalar> sorted;
 	const size_t order = degree + 1;
 	const size_t segment_size = (degree + 1) * dimension;
 	if (coefficients.size() % segment_size != 0) {
 		return sorted;
 	}
-	//sorted.resize(coefficients.size());
 	for (size_t i = 0; i < coefficients.size() / segment_size; ++i) {
-		Eigen::Matrix<Scalar, order, dimension> segment_coefficients;
+		Eigen::Matrix<RealScalar, Dynamic, Dynamic> segment_coefficients;
+		segment_coefficients.resize(order, dimension);
 		for (size_t j = 0; j < segment_size / dimension; ++j) {
 			for (size_t k = 0; k < dimension; ++k) {
 				segment_coefficients(j, k) = coefficients[(i * segment_size) + (j * dimension) + k];
 			}
 		}
-		for (size_t p = 0; p < segment_coefficients.cols(); ++p) {
-			for (size_t q = 0; q < segment_coefficients.rows(); ++q) {
+		for (size_t p = 0; p < dimension; ++p) {
+			for (size_t q = 0; q < order; ++q) {
 				sorted.push_back(segment_coefficients(q, p));
 			}
 		}
