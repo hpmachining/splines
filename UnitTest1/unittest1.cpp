@@ -258,7 +258,7 @@ namespace UnitTest1
 				coordinate = bezier::CalculateCoordinate<double>(control_points, .5, i, 3, bezier::k2d);
 				Assert::IsFalse(coordinate == empty);
 				out_file << coordinate.transpose() << '\n';
-				tangent = bezier::CalculateTangent<double, bezier::k2d, 3>(control_points, i, .5);
+				tangent = bezier::CalculateTangent<double>(control_points, .5, i, 3, bezier::k2d);
 				Assert::IsFalse(tangent == empty);
 				tangent.normalize();
 				tangent += coordinate;
@@ -272,9 +272,9 @@ namespace UnitTest1
 		{
 			//using Point = Eigen::Vector3d;
 			using Point = std::array<double, 3>;
-			std::ifstream in_file("cubic.dat");
+			std::ifstream in_file("segment.dat");
 			Assert::IsTrue(in_file.is_open());
-			std::ofstream out_file("cubic3dtan.points");
+			std::ofstream out_file("segment.points");
 			Point control_point;
 			std::vector<Point> control_points;
 			//while (in_file >> control_point.x() >> control_point.y() >> control_point.z()) {
@@ -297,13 +297,13 @@ namespace UnitTest1
 			tangent = empty;
 			out_file << std::fixed << std::setprecision(14);
 			for (size_t i = 1; i <= control_points.size() / 4; ++i) {
-				coordinate = bezier::CalculateCoordinate<double>(control_points, .5, i);
+				coordinate = bezier::CalculateCoordinate<double>(control_points, .25, i);
 				Assert::IsFalse(coordinate == empty);
 				Eigen::Vector3d eigen_coordinate;
 				eigen_coordinate << coordinate[0], coordinate[1], coordinate[2];
 				out_file << eigen_coordinate.transpose() << '\n';
 				//out_file << coordinate[0] << ' ' << coordinate[1] << ' ' << coordinate[2] << '\n';
-				tangent = bezier::CalculateTangent<double, bezier::k3d, 3>(control_points, i, .5);
+				tangent = bezier::CalculateTangent<double>(control_points, .25, i);
 				Assert::IsFalse(tangent == empty);
 				Eigen::Vector3d normal_tangent;
 				normal_tangent << tangent[0], tangent[1], tangent[2];
@@ -311,9 +311,51 @@ namespace UnitTest1
 				normal_tangent += eigen_coordinate;
 				out_file << normal_tangent.transpose() << '\n';
 				//out_file << tangent.transpose() << '\n';
-				normal = bezier::CalculateNormal<double, bezier::k3d, 3>(control_points, i, .5);
+				normal = bezier::CalculateNormal<double>(control_points, .25, i);
 				Assert::IsFalse(normal == empty);
 				Eigen::Vector3d eigen_normal;
+				eigen_normal << normal[0], normal[1], normal[2];
+				eigen_normal.normalize();
+				eigen_normal += eigen_coordinate;
+				out_file << eigen_normal.transpose() << '\n';
+				coordinate = empty;
+				tangent = empty;
+
+				coordinate = bezier::CalculateCoordinate<double>(control_points, .5, i);
+				Assert::IsFalse(coordinate == empty);
+				eigen_coordinate << coordinate[0], coordinate[1], coordinate[2];
+				out_file << eigen_coordinate.transpose() << '\n';
+				//out_file << coordinate[0] << ' ' << coordinate[1] << ' ' << coordinate[2] << '\n';
+				tangent = bezier::CalculateTangent<double>(control_points, .5, i);
+				Assert::IsFalse(tangent == empty);
+				normal_tangent << tangent[0], tangent[1], tangent[2];
+				normal_tangent.normalize();
+				normal_tangent += eigen_coordinate;
+				out_file << normal_tangent.transpose() << '\n';
+				//out_file << tangent.transpose() << '\n';
+				normal = bezier::CalculateNormal<double>(control_points, .5, i);
+				Assert::IsFalse(normal == empty);
+				eigen_normal << normal[0], normal[1], normal[2];
+				eigen_normal.normalize();
+				eigen_normal += eigen_coordinate;
+				out_file << eigen_normal.transpose() << '\n';
+				coordinate = empty;
+				tangent = empty;
+
+				coordinate = bezier::CalculateCoordinate<double>(control_points, .75, i);
+				Assert::IsFalse(coordinate == empty);
+				eigen_coordinate << coordinate[0], coordinate[1], coordinate[2];
+				out_file << eigen_coordinate.transpose() << '\n';
+				//out_file << coordinate[0] << ' ' << coordinate[1] << ' ' << coordinate[2] << '\n';
+				tangent = bezier::CalculateTangent<double>(control_points, .75, i);
+				Assert::IsFalse(tangent == empty);
+				normal_tangent << tangent[0], tangent[1], tangent[2];
+				normal_tangent.normalize();
+				normal_tangent += eigen_coordinate;
+				out_file << normal_tangent.transpose() << '\n';
+				//out_file << tangent.transpose() << '\n';
+				normal = bezier::CalculateNormal<double>(control_points, .75, i);
+				Assert::IsFalse(normal == empty);
 				eigen_normal << normal[0], normal[1], normal[2];
 				eigen_normal.normalize();
 				eigen_normal += eigen_coordinate;
@@ -347,7 +389,7 @@ namespace UnitTest1
 				coordinate = bezier::CalculateCoordinate<double>(control_points, .5, i, 2, bezier::k2d);
 				Assert::IsFalse(coordinate == empty);
 				out_file << coordinate.transpose() << '\n';
-				tangent = bezier::CalculateTangent<double, bezier::k2d, 2>(control_points, i, .5);
+				tangent = bezier::CalculateTangent<double>(control_points, .5, i, 2, bezier::k2d);
 				Assert::IsFalse(tangent == empty);
 				tangent.normalize();
 				tangent += coordinate;
@@ -384,15 +426,15 @@ namespace UnitTest1
 			normal = empty;
 			out_file << std::fixed << std::setprecision(14);
 			for (size_t i = 1; i <= control_points.size() / 3; ++i) {
-				coordinate = bezier::CalculateCoordinate<double>(control_points, .75, i, 3);
+				coordinate = bezier::CalculateCoordinate<double>(control_points, .75, i, 2);
 				Assert::IsFalse(coordinate == empty);
 				out_file << coordinate.transpose() << '\n';
-				tangent = bezier::CalculateTangent<double, bezier::k3d, 2>(control_points, i, .75);
+				tangent = bezier::CalculateTangent<double>(control_points, .75, i, 2);
 				Assert::IsFalse(tangent == empty);
 				tangent.normalize();
 				tangent += coordinate;
 				out_file << tangent.transpose() << '\n';
-				normal = bezier::CalculateNormal<double, bezier::k3d, 2>(control_points, i, .75);
+				normal = bezier::CalculateNormal<double>(control_points, .75, i, 2);
 				Assert::IsFalse(normal == empty);
 				normal.normalize();
 				normal += coordinate;
@@ -430,21 +472,21 @@ namespace UnitTest1
 			normal = empty;
 			tangent = empty;
 			out_file << std::fixed << std::setprecision(14);
-			for (size_t i = 1; i <= control_points.size() / 4; ++i) {
+			for (size_t i = 1; i <= control_points.size() / 5; ++i) {
 				coordinate = bezier::CalculateCoordinate<double>(control_points, .5, i, 4);
 				Assert::IsFalse(coordinate == empty);
 				Eigen::Vector3d eigen_coordinate;
 				eigen_coordinate << coordinate[0], coordinate[1], coordinate[2];
 				out_file << eigen_coordinate.transpose() << '\n';
 				//out_file << coordinate[0] << ' ' << coordinate[1] << ' ' << coordinate[2] << '\n';
-				tangent = bezier::CalculateTangent<double, bezier::k3d, 4>(control_points, i, .5);
+				tangent = bezier::CalculateTangent<double>(control_points, .5, i, 4, bezier::k3d);
 				Assert::IsFalse(tangent == empty);
 				Eigen::Vector3d normal_tangent;
 				normal_tangent << tangent[0], tangent[1], tangent[2];
 				normal_tangent.normalize();
 				normal_tangent += eigen_coordinate;
 				out_file << normal_tangent.transpose() << '\n';
-				normal = bezier::CalculateNormal<double, bezier::k3d, 4>(control_points, i, .5);
+				normal = bezier::CalculateNormal<double>(control_points, .5, i, 4);
 				Assert::IsFalse(normal == empty);
 				Eigen::Vector3d eigen_normal;
 				eigen_normal << normal[0], normal[1], normal[2];

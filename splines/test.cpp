@@ -71,7 +71,7 @@ void TestDegreeElevation() {
 
 void TestMatrix() {
 	using Point = Eigen::Vector3d;
-	const size_t degree = 10;
+	const size_t degree = 3;
 	const size_t order = degree + 1;
 	const size_t dimension = 3;
 	double t = .75;
@@ -87,8 +87,8 @@ void TestMatrix() {
 		points.push_back(point);
 	}
 	std::vector<Point, Eigen::aligned_allocator<Point>> all_segments;
-	for (size_t i = 0; i < points.size(); ++i) {
-		std::vector<Point> split_segments = bezier::SplitSegment<double, bezier::k3d, degree>(points, i + 1, .25);
+	for (size_t i = 0; i < points.size() / order; ++i) {
+		std::vector<Point> split_segments = bezier::SplitSegment<double>(points, .25, i + 1, degree, dimension);
 		all_segments.insert(std::end(all_segments), std::begin(split_segments), std::end(split_segments));
 	}
 
@@ -100,56 +100,80 @@ void TestMatrix() {
 			std::cout << '\n';
 		}
 	}
+}
 
-	//// Create and fill Eigen::Matrix with control points for specified segment
-	//Eigen::Matrix<RealScalar, order, dimension> P;
-	////for (auto i = 0; i < points.size() / order; ++i) {
-	//size_t i = 0;
-	//const size_t segment_index = (i)* order;
-	//for (size_t j = segment_index, p = 0; j < segment_index + order; ++j, ++p) {
-	//	for (size_t k = 0; k < dimension; ++k) {
-	//		P(p, k) = points[j][k];
-	//	}
-	//}
+void TestTriangle() {
+	using Point = Eigen::Vector3d;
+	const size_t degree = 3;
+	const size_t order = degree + 1;
+	const size_t dimension = 3;
+	double t = .75;
+	Eigen::Matrix4d lh;
+	Eigen::Matrix4d rh;
 
-	//// Create and fill the power basis (t) matrix
-	//Eigen::Matrix<RealScalar, order, order> Z;
-	//Z.setZero();
-	//Eigen::Matrix<RealScalar, 1, order> power;
-	//for (size_t i = 0; i < order; ++i) {
-	//	power(0, i) = std::pow(t, i);
-	//	Z.diagonal()[i] = power(0, i);
-	//}
+	// Read control points from file
+	Point point;
+	std::vector<Point, Eigen::aligned_allocator<Point>> points;
+	while (std::cin >> point.x() >> point.y() >> point.z()) {
+		points.push_back(point);
+	}
 
-	//Eigen::Matrix<double, order, order> M = bezier::GetPowerCoefficients<double, degree>();
-	//Eigen::Matrix<double, order, order> M1 = M.inverse();
+	// Create and fill Eigen::Matrix with control points for specified segment
+	Eigen::Matrix<double, order, dimension> P;
+	//for (auto i = 0; i < points.size() / order; ++i) {
+	size_t i = 0;
+	const size_t segment_index = (i)* order;
+	for (size_t j = segment_index, p = 0; j < segment_index + order; ++j, ++p) {
+		for (size_t k = 0; k < dimension; ++k) {
+			P(p, k) = points[j][k];
+		}
+	}
 
-	////std::cout <<
-	////	"T\n" << power << "\n\n" <<
-	////	"M1\n" << M1 << "\n\n" <<
-	////	"Z\n" << Z << "\n\n" <<
-	////	"M\n" << M << "\n\n" <<
-	////	"P\n" << P << "\n\n";
+	// Create and fill the power basis (t) matrix
+	Eigen::Matrix<double, order, order> Z;
+	Z.setZero();
+	Eigen::Matrix<double, 1, order> power;
+	for (size_t i = 0; i < order; ++i) {
+		power(0, i) = std::pow(t, i);
+		Z.diagonal()[i] = power(0, i);
+	}
 
-	//Eigen::Matrix<RealScalar, order, dimension> result;
-	//Eigen::Matrix<RealScalar, order, order> Q = M1 * Z * M;
-	//Eigen::Matrix<RealScalar, order, order> Q1;
-	//Q1.setZero();
-	//for (size_t i = 0; i < order; ++i) {
-	//	Q1.block(order - (i + 1), order - (i + 1), 1, i + 1) = Q.block(i, 0, 1, i + 1);
-	//}
-	//result = Q * P;
-	//std::cout << result << "\n\n";
-	//result = Q1 * P;
-	//std::cout << result << "\n\n";
-	////std::cout << "Q\n" << Q << "\n\n";
-	////std::cout << "Q1\n" << Q1 << "\n\n";
-	////std::cout << "Z\n" << Z << "\n\n";
-	////std::cout << "Z1\n" << Z1 << "\n\n";
-	////std::cout << "Q * P\n" << result << "\n\n";
+	Eigen::Matrix<double, order, order> M = bezier::GetPowerCoefficients<double>(degree);
+	Eigen::Matrix<double, order, order> M1 = M.inverse();
+
+	//std::cout <<
+	//	"T\n" << power << "\n\n" <<
+	//	"M1\n" << M1 << "\n\n" <<
+	//	"Z\n" << Z << "\n\n" <<
+	//	"M\n" << M << "\n\n" <<
+	//	"P\n" << P << "\n\n";
+
+	Eigen::Matrix<double, order, dimension> result;
+	Eigen::Matrix<double, order, order> Q = M1 * Z * M;
+	Eigen::Matrix<double, order, order> Q1;
+	Q1.setZero();
+	for (size_t i = 0; i < order; ++i) {
+		Q1.block(order - (i + 1), order - (i + 1), 1, i + 1) = Q.block(i, 0, 1, i + 1);
+	}
+	result = Q * P;
+	std::cout << result << "\n\n";
+	result = Q1 * P;
+	std::cout << result << "\n\n";
+	//std::cout << "Q\n" << Q << "\n\n";
+	//std::cout << "Q1\n" << Q1 << "\n\n";
+	//std::cout << "Z\n" << Z << "\n\n";
+	//std::cout << "Z1\n" << Z1 << "\n\n";
+	//std::cout << "Q * P\n" << result << "\n\n";
 
 }
 
+void TestSecondDerivative() {
+	const size_t degree = 5;
+	Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> coefficients;
+	coefficients.resize((degree - 1), (degree - 1));
+	coefficients = bezier::GetSecondDerivativeCoefficients<double>(degree);
+	std::cout << "2nd Derivative Coefficients\n" << coefficients << "\n\n";
+}
 //int main(void) {
 //  Eigen::Affine3d transform;
 //  transform.setIdentity();
@@ -188,7 +212,7 @@ int main(void) {
 	using bezier::k2d;	
 	using bezier::k3d;
 	//TestMatrix();
-	TestDegreeElevation();
+	TestSecondDerivative();
 
 	//Eigen::Vector3d controlPoint;
 	//std::vector<Eigen::Vector3d> controlPoints;
