@@ -272,9 +272,9 @@ namespace UnitTest1
 		{
 			//using Point = Eigen::Vector3d;
 			using Point = std::array<double, 3>;
-			std::ifstream in_file("segment.dat");
+			std::ifstream in_file("cubic.dat");
 			Assert::IsTrue(in_file.is_open());
-			std::ofstream out_file("segment.points");
+			std::ofstream out_file("cubic.points");
 			Point control_point;
 			std::vector<Point> control_points;
 			//while (in_file >> control_point.x() >> control_point.y() >> control_point.z()) {

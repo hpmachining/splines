@@ -59,6 +59,29 @@ int TestSplineLibrary() {
 			GetSplineControlPoints(param, control_points);
 		}
 
+		//// Test old normal function using 2nd derivative
+		//CKSCoord old_normal;
+		//CKSCoord old_tangent;
+		//CKSCoord old_position;
+
+		//CKSMath::Evaluate(spline, NULL, false, false, false, 1, .0625, &splineMatrix, &old_position,
+		//	&old_normal, &old_tangent);
+		////GetSplineNormal(coeffs, 1, .5, old_normal);
+		//if (old_normal.Magnitude() > .001) {
+		//	old_normal.Normalize();
+		//}
+		//if (old_tangent.Magnitude() > .001) {
+		//	old_tangent.Normalize();
+		//}
+
+		////GetSplineCoord(coeffs, 1, .5, old_position);
+		//old_normal = old_position + old_normal;
+		//old_tangent = old_position + old_tangent;
+		//part.AddPoint(old_position);
+		//part.AddPoint(old_normal);
+		//part.AddPoint(old_tangent);
+		//part.NoteState();
+
 		//// Test 2D spline points
 		//CKSCoord2D cp_2d;
 		//std::vector<CKSCoord2D> points_2d;
@@ -121,13 +144,13 @@ int TestSplineLibrary() {
 		//}
 		//part.NoteState();
 
-		// Test segment split 3d. Works.
-		const size_t degree = 3;
-		CKSCoordArray split_points = bezier::SplitSegment<double>(control_points, .5, 1);
-		for (auto i : split_points) {
-			part.AddPoint(i);
-		}
-		part.NoteState();
+		//// Test segment split 3d. Works.
+		//const size_t degree = 3;
+		//CKSCoordArray split_points = bezier::SplitSegment<double>(control_points, .5, 1);
+		//for (auto i : split_points) {
+		//	part.AddPoint(i);
+		//}
+		//part.NoteState();
 
 		//// Create spline from calculated coefficients 3d. Works
 		//for (size_t i = 0; i < 2; ++i) {
@@ -137,27 +160,33 @@ int TestSplineLibrary() {
 		//}
 		//part.NoteState();
 
-		//// Test tangent and normal functions 3d. Works
-		//CKSCoord coordinate;
-		//CKSCoord tangent;
-		//CKSCoord normal;
-		//for (size_t i = 1; i <= control_points.size() / 4; ++i) {
-		//	coordinate = bezier::CalculateCoordinate<double>(control_points, .25, i, 3, bezier::k3d);
-		//	part.AddPoint(coordinate);
-		//	tangent = bezier::CalculateTangent<double>(control_points, .25, i, 3, bezier::k3d);
-		//	normal = bezier::CalculateNormal<double>(control_points, .25, i, 3, bezier::k3d);
-		//	tangent.Normalize();
-		//	normal.Normalize();
-		//	CKSMatrix temp;
-		//	CKSMath::MatrixVector(coordinate, coordinate + tangent, temp);
-		//	CKEntityAttrib attrib;
-		//	attrib.m_ucColorNumber = 7;
-		//	part.AddVector(1.0, &temp, &attrib);
-		//	attrib.m_ucColorNumber = 10;
-		//	CKSMath::MatrixVector(coordinate, coordinate + normal, temp);
-		//	part.AddVector(1.0, &temp, &attrib);
-		//}
-		//part.NoteState();
+		// Test tangent and normal functions 3d. Works
+		CKSCoord coordinate;
+		CKSCoord tangent;
+		CKSCoord normal;
+		CKSCoord curvature;
+		for (size_t i = 1; i <= control_points.size() / 4; ++i) {
+			coordinate = bezier::CalculateCoordinate<double>(control_points, .25, i, 3, bezier::k3d);
+			part.AddPoint(coordinate);
+			tangent = bezier::CalculateTangent<double>(control_points, .25, i, 3, bezier::k3d);
+			normal = bezier::CalculateNormal<double>(control_points, .25, i, 3, bezier::k3d);
+			curvature = bezier::CalculateSecondDerivative<double>(control_points, .25, i, 3, bezier::k3d);
+			tangent.Normalize();
+			normal.Normalize();
+			curvature.Normalize();
+			CKSMatrix temp;
+			CKSMath::MatrixVector(coordinate, coordinate + tangent, temp);
+			CKEntityAttrib attrib;
+			attrib.m_ucColorNumber = 7;
+			part.AddVector(1.0, &temp, &attrib);
+			attrib.m_ucColorNumber = 10;
+			CKSMath::MatrixVector(coordinate, coordinate + normal, temp);
+			part.AddVector(1.0, &temp, &attrib);
+			attrib.m_ucColorNumber = 2;
+			CKSMath::MatrixVector(coordinate, coordinate + curvature, temp);
+			part.AddVector(1.0, &temp, &attrib);
+		}
+		part.NoteState();
 
 		WriteData("nodes.dat", nodePoints);
 		WriteCoefficients("coeff.dat", coeffs);

@@ -32,6 +32,10 @@ Point CalculateTangent(const std::vector<Point>& points, const RealScalar t,
 	const size_t segment_id = 1, const size_t degree = 3, const size_t dimension = k3d);
 
 template <typename RealScalar, typename Point>
+Point CalculateSecondDerivative(const std::vector<Point>& points, const RealScalar t,
+	const size_t segment_id = 1, const size_t degree = 3, const size_t dimension = k3d);
+
+template <typename RealScalar, typename Point>
 Point CalculateNormal(const std::vector<Point>& points, const RealScalar t,
 	const size_t segment_id = 1, const size_t degree = 3, const size_t dimension = k3d);
 
@@ -189,6 +193,93 @@ Point CalculateTangent(const std::vector<Point>& points, const RealScalar t,
 		return tangent;
 	}
 
+	//// Get coeffecients of specified segment
+	//std::vector<RealScalar> coefficients;
+	//coefficients = CalculateCoefficients<RealScalar>(points, segment_id, degree, dimension);
+
+	//// Create and fill Eigen matrix with coefficients
+	//Eigen::Matrix<RealScalar, Dynamic, Dynamic> C;
+	//C.resize(degree, dimension);
+	//for (size_t i = 0, p = 0; p < degree; i += dimension, ++p) {
+	//	for (size_t q = 0; q < dimension; ++q) {
+	//		C(p, q) = coefficients[i + q];
+	//	}
+	//}
+
+	// Create and fill Eigen::Matrix with control points for specified segment
+	const size_t segment_index = (segment_id - 1) * order;
+	Eigen::Matrix<RealScalar, Dynamic, Dynamic> control_points;
+	control_points.resize(order, dimension);
+
+	for (size_t i = segment_index, p = 0; i < segment_index + order; ++i, ++p) {
+		for (size_t j = 0; j < dimension; ++j) {
+			control_points(p, j) = points[i][j];
+		}
+	}
+
+	// Create and fill the power basis matrix
+	Eigen::Matrix<RealScalar, 1, Dynamic> parameter;
+	parameter.resize(Eigen::NoChange, degree);
+	for (size_t i = 0; i < degree; ++i) {
+		parameter(0, i) = std::pow(t, i);
+	}
+
+	//// Create and fill the coefficients of the power basis matrix
+	//Eigen::Matrix<RealScalar, Dynamic, Dynamic> basis;
+	//basis.resize(degree, degree);
+	//basis << GetTangentCoefficients<RealScalar>(degree);
+
+
+	// Create and fill the coefficients of the power basis matrix
+	Eigen::Matrix<RealScalar, Dynamic, Dynamic> basis;
+	basis.resize(degree, degree);
+	basis << GetPowerCoefficients<RealScalar>(degree - 1);
+	basis *= (degree * 2);
+
+	//Eigen::Matrix<RealScalar, Dynamic, 1> result;
+	//result.resize(dimension, Eigen::NoChange);
+	//result = parameter * basis * C;
+	//for (size_t i = 0; i < dimension; ++i) {
+	//	tangent[i] = result(i, 0);
+	//}
+
+	Eigen::Matrix<RealScalar, Dynamic, 1> result;
+	result.resize(dimension, Eigen::NoChange);
+	result = parameter * basis * control_points.topRows(degree);
+	for (size_t i = 0; i < dimension; ++i) {
+		tangent[i] = result(i, 0);
+	}
+
+	return tangent;
+}
+
+/**
+@brief	Calculate the curvature on a segment of a composite Bézier curve.
+
+This function calculates the second derivative (curvature) at parameter \f$t\f$ on a Bézier curve segment.
+
+@tparam RealScalar Type of data being passed in. Valid types are float and double.
+@tparam Point Container type for the points. Must have [] accessor. [0] = x, [1] = y and if 3d, [2] = z.
+@param	points Control points. Number of control points for each segment should be \f$degree + 1\f$
+@param	t Parameter in the range \f$0 \le t \le 1\f$ for a point on the curve segment. Values
+outside of this range may be used to calculate a coordinate on a natural extension of the
+curve segment.
+@param	segment_id Segment number to use for calculation.
+@param	degree Degree of the Bézier curve.
+@param	dimension Dimension of control point coordinates. Valid options are bezier::k2d or bezier::k3d
+@return	Coordinate of type *Point* for the calculated second derivative.
+*/
+template <typename RealScalar, typename Point>
+Point CalculateSecondDerivative(const std::vector<Point>& points, const RealScalar t,
+	const size_t segment_id, const size_t degree, const size_t dimension) {
+	const size_t order = degree + 1;
+	const size_t matrix_size = degree - 1;
+	Point curvature;
+	curvature[0] = std::numeric_limits<RealScalar>::quiet_NaN();
+	if (!IsSegmentDataValid(points, order, segment_id)) {
+		return curvature;
+	}
+
 	// Get coeffecients of specified segment
 	std::vector<RealScalar> coefficients;
 	coefficients = CalculateCoefficients<RealScalar>(points, segment_id, degree, dimension);
@@ -204,24 +295,24 @@ Point CalculateTangent(const std::vector<Point>& points, const RealScalar t,
 
 	// Create and fill the power basis matrix
 	Eigen::Matrix<RealScalar, 1, Dynamic> parameter;
-	parameter.resize(Eigen::NoChange, degree);
-	for (size_t i = 0; i < degree; ++i) {
+	parameter.resize(Eigen::NoChange, matrix_size);
+	for (size_t i = 0; i < matrix_size; ++i) {
 		parameter(0, i) = std::pow(t, i);
 	}
 
 	// Create and fill the coefficients of the power basis matrix
 	Eigen::Matrix<RealScalar, Dynamic, Dynamic> basis;
-	basis.resize(degree, degree);
-	basis << GetTangentCoefficients<RealScalar>(degree);
+	basis.resize(matrix_size, matrix_size);
+	basis << GetSecondDerivativeCoefficients<RealScalar>(degree);
 
 	Eigen::Matrix<RealScalar, Dynamic, 1> result;
 	result.resize(dimension, Eigen::NoChange);
-	result = parameter * basis * C;
+	result = parameter * basis * C.topRows(matrix_size);
 	for (size_t i = 0; i < dimension; ++i) {
-		tangent[i] = result(i, 0);
+		curvature[i] = result(i, 0);
 	}
 
-	return tangent;
+	return curvature;
 }
 
 /**

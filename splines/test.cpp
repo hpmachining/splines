@@ -174,6 +174,29 @@ void TestSecondDerivative() {
 	coefficients = bezier::GetSecondDerivativeCoefficients<double>(degree);
 	std::cout << "2nd Derivative Coefficients\n" << coefficients << "\n\n";
 }
+
+void TestFirstDerivative() {
+	using Eigen::Dynamic;
+	const size_t degree = 3;
+	double t = .5;
+
+	// Create and fill the power basis matrix
+	Eigen::Matrix<double, 1, Dynamic> parameter;
+	parameter.resize(Eigen::NoChange, degree);
+	for (size_t i = 0; i < degree; ++i) {
+		parameter(0, i) = std::pow(t, i);
+	}
+
+	Eigen::Matrix<double, Dynamic, Dynamic> basis;
+	basis.resize(degree, degree);
+	basis << bezier::GetPowerCoefficients<double>(degree - 1);
+	basis *= (degree * 2);
+
+	std::cout << "parameter\n" << parameter << "\n\n";
+	std::cout << "basis\n" << basis << "\n\n";
+
+}
+
 //int main(void) {
 //  Eigen::Affine3d transform;
 //  transform.setIdentity();
@@ -212,7 +235,7 @@ int main(void) {
 	using bezier::k2d;	
 	using bezier::k3d;
 	//TestMatrix();
-	TestSecondDerivative();
+	TestFirstDerivative();
 
 	//Eigen::Vector3d controlPoint;
 	//std::vector<Eigen::Vector3d> controlPoints;

@@ -44,7 +44,22 @@ Eigen::Matrix<RealScalar, Dynamic, Dynamic> GetTangentCoefficients(const size_t 
 	Eigen::DiagonalMatrix<RealScalar, Dynamic> coefficients;
 	coefficients.resize(degree);
 	for (size_t i = 0; i < degree; ++i) {
-		coefficients.diagonal()[i] = i + 1;
+		coefficients.diagonal()[i] = static_cast<RealScalar>(i + 1);
+	}
+	basis = coefficients;
+	basis.rowwise().reverseInPlace();
+	return basis;
+}
+
+template <typename RealScalar>
+Eigen::Matrix<RealScalar, Dynamic, Dynamic> GetSecondDerivativeCoefficients(const size_t degree) {
+	const size_t matrix_size = degree - 1;
+	Eigen::Matrix<RealScalar, Dynamic, Dynamic> basis;
+	basis.resize(matrix_size, matrix_size);
+	Eigen::DiagonalMatrix<RealScalar, Dynamic> coefficients;
+	coefficients.resize(matrix_size);
+	for (size_t i = 0; i < degree - 1; ++i) {
+		coefficients.diagonal()[i] = static_cast<RealScalar>((degree - i) * (degree - (i + 1)));
 	}
 	basis = coefficients;
 	basis.rowwise().reverseInPlace();
@@ -104,13 +119,4 @@ std::vector<RealScalar> ConvertCoefficientLayoutToKC(const std::vector<RealScala
 	return sorted;
 }
 
-template <typename RealScalar>
-Eigen::DiagonalMatrix<RealScalar, Dynamic> GetSecondDerivativeCoefficients(const size_t degree) {
-	Eigen::DiagonalMatrix<RealScalar, Dynamic> coefficients;
-	coefficients.resize(degree - 1);
-	for (size_t i = 0; i < degree - 1; ++i) {
-		coefficients.diagonal()[i] = (degree - i) * (degree - (i + 1));
-	}
-	return coefficients;
-}
 } // end namespace bezier
