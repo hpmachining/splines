@@ -193,27 +193,16 @@ Point CalculateTangent(const std::vector<Point>& points, const RealScalar t,
 		return tangent;
 	}
 
-	//// Get coeffecients of specified segment
-	//std::vector<RealScalar> coefficients;
-	//coefficients = CalculateCoefficients<RealScalar>(points, segment_id, degree, dimension);
+	// Get coeffecients of specified segment
+	std::vector<RealScalar> coefficients;
+	coefficients = CalculateCoefficients<RealScalar>(points, segment_id, degree, dimension);
 
-	//// Create and fill Eigen matrix with coefficients
-	//Eigen::Matrix<RealScalar, Dynamic, Dynamic> C;
-	//C.resize(degree, dimension);
-	//for (size_t i = 0, p = 0; p < degree; i += dimension, ++p) {
-	//	for (size_t q = 0; q < dimension; ++q) {
-	//		C(p, q) = coefficients[i + q];
-	//	}
-	//}
-
-	// Create and fill Eigen::Matrix with control points for specified segment
-	const size_t segment_index = (segment_id - 1) * order;
-	Eigen::Matrix<RealScalar, Dynamic, Dynamic> control_points;
-	control_points.resize(order, dimension);
-
-	for (size_t i = segment_index, p = 0; i < segment_index + order; ++i, ++p) {
-		for (size_t j = 0; j < dimension; ++j) {
-			control_points(p, j) = points[i][j];
+	// Create and fill Eigen matrix with coefficients
+	Eigen::Matrix<RealScalar, Dynamic, Dynamic> C;
+	C.resize(degree, dimension);
+	for (size_t i = 0, p = 0; p < degree; i += dimension, ++p) {
+		for (size_t q = 0; q < dimension; ++q) {
+			C(p, q) = coefficients[i + q];
 		}
 	}
 
@@ -224,28 +213,14 @@ Point CalculateTangent(const std::vector<Point>& points, const RealScalar t,
 		parameter(0, i) = std::pow(t, i);
 	}
 
-	//// Create and fill the coefficients of the power basis matrix
-	//Eigen::Matrix<RealScalar, Dynamic, Dynamic> basis;
-	//basis.resize(degree, degree);
-	//basis << GetTangentCoefficients<RealScalar>(degree);
-
-
 	// Create and fill the coefficients of the power basis matrix
 	Eigen::Matrix<RealScalar, Dynamic, Dynamic> basis;
 	basis.resize(degree, degree);
-	basis << GetPowerCoefficients<RealScalar>(degree - 1);
-	basis *= (degree * 2);
-
-	//Eigen::Matrix<RealScalar, Dynamic, 1> result;
-	//result.resize(dimension, Eigen::NoChange);
-	//result = parameter * basis * C;
-	//for (size_t i = 0; i < dimension; ++i) {
-	//	tangent[i] = result(i, 0);
-	//}
+	basis << GetTangentCoefficients<RealScalar>(degree);
 
 	Eigen::Matrix<RealScalar, Dynamic, 1> result;
 	result.resize(dimension, Eigen::NoChange);
-	result = parameter * basis * control_points.topRows(degree);
+	result = parameter * basis * C;
 	for (size_t i = 0; i < dimension; ++i) {
 		tangent[i] = result(i, 0);
 	}
