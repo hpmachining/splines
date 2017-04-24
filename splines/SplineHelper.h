@@ -32,9 +32,8 @@ using Eigen::Dynamic;
 
 template <typename Point>
 bool IsSegmentDataValid(const std::vector<Point>& points, const size_t order, const size_t segment_id) {
-	// Omits the last set of control points if not a complete set.
 	const size_t num_segments = points.size() / order;
-	return  (num_segments > 0 && segment_id > 0 && segment_id <= num_segments);
+	return  (num_segments > 0 && segment_id <= num_segments);
 }
 
 template <typename RealScalar>
