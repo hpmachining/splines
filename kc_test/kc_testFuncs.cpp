@@ -100,15 +100,18 @@ int TestSplineLibrary() {
 		//part.NoteState();
 
 		//// Test segment split 2d. Works.
-		//std::vector<CKSCoord2D> split_points = bezier::SplitSegment<double>(points_2d, .5, 1, degree, 2);
-		//for (auto i : split_points) {
-		//	part.AddPoint(i.m_dX, i.m_dY, 0.0);
+		//std::vector<CKSCoord2D> split_points;
+		//for (size_t i = 0; i < points_2d.size() / (degree + 1); ++i) {
+		//	split_points = bezier::SplitSegment<double>(points_2d, .5, i, degree, 2);
+		//	for (auto j : split_points) {
+		//		part.AddPoint(j.m_dX, j.m_dY, 0.0);
+		//	}
 		//}
 		//part.NoteState();
 
 		//// Create spline from calculated coefficients 2d
 		//for (size_t i = 0; i < 2; ++i) {
-		//	std::vector<double> new_coeff = bezier::CalculateCoefficients<double>(split_points, i + 1, degree, bezier::k2d);
+		//	std::vector<double> new_coeff = bezier::CalculateCoefficients<double>(split_points, i, degree, bezier::k2d);
 		//	std::vector<double> kc_coeff = bezier::ConvertCoefficientLayoutToKC<double>(new_coeff, degree, bezier::k2d);
 		//	part.AddSpline(false, false, kc_coeff);
 		//}
@@ -118,10 +121,10 @@ int TestSplineLibrary() {
 		//CKSCoord2D coordinate;
 		//CKSCoord2D tangent;
 		//CKSCoord2D normal;
-		//for (size_t i = 1; i <= points_2d.size() / 4; ++i) {
+		//for (size_t i = 0; i < points_2d.size() / 4; ++i) {
 		//	coordinate = bezier::CalculateCoordinate<double>(points_2d, .25, i, degree, bezier::k2d);
 		//	part.AddPoint(coordinate.m_dX, coordinate.m_dY, 0.0);
-		//	tangent = bezier::CalculateTangent<double>(points_2d, .25, i, degree, bezier::k2d);
+		//	tangent = bezier::CalculateFirstDerivative<double>(points_2d, .25, i, degree, bezier::k2d);
 		//	normal = bezier::CalculateNormal<double>(points_2d, .25, i, degree, bezier::k2d);
 		//	CKSMatrix temp;
 		//	CKSCoord v1(coordinate.m_dX, coordinate.m_dY, 0.0);
@@ -144,31 +147,34 @@ int TestSplineLibrary() {
 		//}
 		//part.NoteState();
 
-		//// Test segment split 3d. Works.
-		//const size_t degree = 3;
-		//CKSCoordArray split_points = bezier::SplitSegment<double>(control_points, .5, 1);
-		//for (auto i : split_points) {
-		//	part.AddPoint(i);
-		//}
-		//part.NoteState();
+		// Test segment split 3d. Works.
+		const size_t degree = 3;
+		std::vector<CKSCoord> split_points;
+		for (size_t i = 0; i < control_points.size() / (degree + 1); ++i) {
+			split_points = bezier::SplitSegment<double>(control_points, .5, i, degree, 3);
+			for (auto j : split_points) {
+				part.AddPoint(j);
+			}
+		}
+		part.NoteState();
 
-		//// Create spline from calculated coefficients 3d. Works
-		//for (size_t i = 0; i < 2; ++i) {
-		//	std::vector<double> new_coeff = bezier::CalculateCoefficients<double>(split_points, i + 1);
-		//	std::vector<double> kc_coeff = bezier::ConvertCoefficientLayoutToKC<double>(new_coeff, degree, bezier::k3d);
-		//	part.AddSpline(true, false, kc_coeff);
-		//}
-		//part.NoteState();
+		// Create spline from calculated coefficients 3d. Works
+		for (size_t i = 0; i < 2; ++i) {
+			std::vector<double> new_coeff = bezier::CalculateCoefficients<double>(split_points, i);
+			std::vector<double> kc_coeff = bezier::ConvertCoefficientLayoutToKC<double>(new_coeff, degree, bezier::k3d);
+			part.AddSpline(true, false, kc_coeff);
+		}
+		part.NoteState();
 
 		// Test tangent and normal functions 3d. Works
 		CKSCoord coordinate;
 		CKSCoord tangent;
 		CKSCoord normal;
 		CKSCoord curvature;
-		for (size_t i = 1; i <= control_points.size() / 4; ++i) {
+		for (size_t i = 0; i < control_points.size() / 4; ++i) {
 			coordinate = bezier::CalculateCoordinate<double>(control_points, .25, i, 3, bezier::k3d);
 			part.AddPoint(coordinate);
-			tangent = bezier::CalculateTangent<double>(control_points, .25, i, 3, bezier::k3d);
+			tangent = bezier::CalculateFirstDerivative<double>(control_points, .25, i, 3, bezier::k3d);
 			normal = bezier::CalculateNormal<double>(control_points, .25, i, 3, bezier::k3d);
 			curvature = bezier::CalculateSecondDerivative<double>(control_points, .25, i, 3, bezier::k3d);
 			tangent.Normalize();

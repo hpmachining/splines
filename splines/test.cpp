@@ -274,7 +274,7 @@ int main(void) {
 	//	controlPoints.push_back(controlPoint);
 	//}
 	//Eigen::Vector2d coordinate;
-	//for (auto i = 1; i <= controlPoints.size() / 3; ++i) {
+	//for (auto i = 0; i < controlPoints.size() / 3; ++i) {
 	//	coordinate = bezier::CalculateCoordinate<double, k2d, kQuadratic>(controlPoints, i, .25);
 	//	std::cout.precision(5);
 	//	std::cout << coordinate.transpose() << '\n';
@@ -290,7 +290,7 @@ int main(void) {
 	//	controlPoints.push_back(controlPoint);
 	//}
 	//Eigen::Vector3d coordinate;
-	//for (auto i = 1; i <= controlPoints.size() / 4; ++i) {
+	//for (auto i = 0; i < controlPoints.size() / 4; ++i) {
 	//	coordinate = bezier::CalculateCoordinate<double, k3d, kCubic>(controlPoints, i, .25);
 	//	std::cout.precision(5);
 	//	std::cout << coordinate.transpose() << '\n';
@@ -321,10 +321,10 @@ int main(void) {
 	//Eigen::Vector3d tangent;
 	//Eigen::Vector3d normal;
 	//std::cout << std::fixed << std::setprecision(14);
-	//for (auto i = 1; i <= control_points.size() / 4; ++i) {
+	//for (auto i = 0; i < control_points.size() / 4; ++i) {
 	//	coordinate = bezier::CalculateCoordinate<double, bezier::k3d, 3>(control_points, i, .5);
 	//	std::cout << coordinate.transpose() << '\n';
-	//	tangent = bezier::CalculateTangent<double, bezier::k3d, 3>(control_points, i, .5);
+	//	tangent = bezier::CalculateFirstDerivative<double, bezier::k3d, 3>(control_points, i, .5);
 	//	tangent.normalize();
 	//	tangent += coordinate;
 	//	std::cout << tangent.transpose() << '\n';
