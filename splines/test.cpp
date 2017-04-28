@@ -20,15 +20,15 @@ void WriteFile(const std::string& file, const Eigen::Matrix<RealScalar, rows, co
 }
 
 void TestDegreeElevation() {
-	using Point = Eigen::Vector3d;
-	const size_t dimension = 3; // 2d or 3d points
-	const size_t degree = 4;
+	using Point = Eigen::Vector2d;
+	const size_t dimension = 2; // 2d or 3d points
+	const size_t degree = 2;
 	const size_t order = degree + 1;
 
 	// Read control points from file
 	Point point;
 	std::vector<Point, Eigen::aligned_allocator<Point>> points;
-	while (std::cin >> point.x() >> point.y() >> point.z()) {
+	while (std::cin >> point.x() >> point.y()) {// >> point.z()) {
 		points.push_back(point);
 	}
 
@@ -65,6 +65,11 @@ void TestDegreeElevation() {
 			if (k % (order + 1) == 0) {
 				std::cout << '\n';
 			}
+		}
+		// Get coefficients
+		std::vector<double> coeff = bezier::CalculateCoefficients<double>(elevated_points, 1, 3, 2);
+		for (auto c : coeff) {
+			std::cout << c << "\n";
 		}
 	}
 }
@@ -235,7 +240,8 @@ int main(void) {
 	using bezier::k2d;	
 	using bezier::k3d;
 	//TestMatrix();
-	TestFirstDerivative();
+	//TestFirstDerivative();
+	TestDegreeElevation();
 
 	//Eigen::Vector3d controlPoint;
 	//std::vector<Eigen::Vector3d> controlPoints;
