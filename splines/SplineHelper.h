@@ -33,7 +33,7 @@ using Eigen::Dynamic;
 template <typename Point>
 bool IsSegmentDataValid(const std::vector<Point>& points, const size_t order, const size_t segment_id) {
 	const size_t num_segments = points.size() / order;
-	return  (num_segments > 0 && segment_id <= num_segments);
+	return  (num_segments > 0 && segment_id < num_segments);
 }
 
 template <typename RealScalar>

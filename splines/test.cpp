@@ -27,51 +27,64 @@ void TestDegreeElevation() {
 
 	// Read control points from file
 	Point point;
-	std::vector<Point, Eigen::aligned_allocator<Point>> points;
+	std::vector<Point> points;
 	while (std::cin >> point.x() >> point.y()) {// >> point.z()) {
 		points.push_back(point);
 	}
 
-	for (size_t i = 0; i < points.size() / order; ++i) {
-		const size_t segment_index = i * order;
-
-		// Create and fill Eigen::Matrix with control points for specified segment
-		Eigen::Matrix<double, order, dimension> P = Eigen::Map<Eigen::Matrix<double, order, dimension, Eigen::RowMajor>>
-			(points[segment_index].data(), order, dimension);
-
-		// First point stays the same so add to elevated points
-		std::vector<Point> elevated_points;
-		elevated_points.push_back(P.row(0).transpose());
-
-		// Calculate the new control points
-		Eigen::Matrix<double, degree, 1> M1(Eigen::Matrix<double, degree, 1>::LinSpaced(degree, (1.0 / order),
-			static_cast<double>(degree) / order));
-		Eigen::Matrix<double, degree, dimension> Q =
-			(M1.asDiagonal() * P.topRows<degree>()) + (M1.reverse().asDiagonal() * P.bottomRows<degree>());
-
-		// Add new control points to elevated points
-		for (size_t j = 0; j < degree; ++j) {
-			elevated_points.push_back(Q.row(j).transpose());
-		}
-
-		// Last point stays the same so add to elevated points
-		elevated_points.push_back(P.row(degree).transpose());
-
-		// Output elevated points
-		size_t k = 0;
-		for (auto j : elevated_points) {
-			std::cout << j.transpose() << '\n';
-			++k;
-			if (k % (order + 1) == 0) {
-				std::cout << '\n';
-			}
-		}
-		// Get coefficients
-		std::vector<double> coeff = bezier::CalculateCoefficients<double>(elevated_points, 1, 3, 2);
-		for (auto c : coeff) {
-			std::cout << c << "\n";
-		}
+	std::vector<Point> elevated_points = bezier::ElevateDegree<double, bezier::k2d, degree>(points);
+	for (auto i : elevated_points) {
+		std::cout << i[0] << " " << i[1] << "\n";
 	}
+	for (auto i = 0.0; i <= 1.0; i += .25) {
+		Point coord = bezier::CalculateCoordinate<double>(elevated_points, i, 0, 3, dimension);
+		Point first = bezier::CalculateFirstDerivative<double>(elevated_points, i, 0, 3, dimension);
+		Point second = bezier::CalculateSecondDerivative<double>(elevated_points, i, 0, 3, dimension);
+		std::cout << "t = " << i << "\n";
+		std::cout << "Coordinate = x: " << coord.x() << " y: " << coord.y() << "\n";
+		std::cout << "first derivative = x: " << first.x() << " y: " << first.y() << "\n";
+		std::cout << "second derivative = x: " << second.x() << " y: " << second.y() << "\n\n";
+	}
+	//for (size_t i = 0; i < points.size() / order; ++i) {
+	//	const size_t segment_index = i * order;
+
+	//	// Create and fill Eigen::Matrix with control points for specified segment
+	//	Eigen::Matrix<double, order, dimension> P = Eigen::Map<Eigen::Matrix<double, order, dimension, Eigen::RowMajor>>
+	//		(points[segment_index].data(), order, dimension);
+
+	//	// First point stays the same so add to elevated points
+	//	std::vector<Point> elevated_points;
+	//	elevated_points.push_back(P.row(0).transpose());
+
+	//	// Calculate the new control points
+	//	Eigen::Matrix<double, degree, 1> M1(Eigen::Matrix<double, degree, 1>::LinSpaced(degree, (1.0 / order),
+	//		static_cast<double>(degree) / order));
+	//	Eigen::Matrix<double, degree, dimension> Q =
+	//		(M1.asDiagonal() * P.topRows<degree>()) + (M1.reverse().asDiagonal() * P.bottomRows<degree>());
+
+	//	// Add new control points to elevated points
+	//	for (size_t j = 0; j < degree; ++j) {
+	//		elevated_points.push_back(Q.row(j).transpose());
+	//	}
+
+	//	// Last point stays the same so add to elevated points
+	//	elevated_points.push_back(P.row(degree).transpose());
+
+	//	// Output elevated points
+	//	size_t k = 0;
+	//	for (auto j : elevated_points) {
+	//		std::cout << j.transpose() << '\n';
+	//		++k;
+	//		if (k % (order + 1) == 0) {
+	//			std::cout << '\n';
+	//		}
+	//	}
+	//	// Get coefficients
+	//	std::vector<double> coeff = bezier::CalculateCoefficients<double>(elevated_points, 0, 3, 2);
+	//	for (auto c : coeff) {
+	//		std::cout << c << "\n";
+	//	}
+	//}
 }
 
 void TestMatrix() {
