@@ -16,9 +16,21 @@ static const CDE_data CDE_FUN_TestSplineLibrary[] =
     };
 
 
+static const CDE_data CDE_FUN_SplineHelix[] =
+    {
+    _T("SplineHelix"),              // name
+    NULL,
+    1,                              // # of parameters
+        _T("SplineHelix"),          // function name
+        _T(""),                     // array size
+        CDE_INT,                    // return value type
+    };
+
+
 static const CDE_data *Data[] =
     {
     CDE_FUN_TestSplineLibrary,
+    CDE_FUN_SplineHelix,
     };
 
 
@@ -35,8 +47,20 @@ static const CDE_code CDE_TestSplineLibrary =
     };
 
 
+static const CDE_code CDE_SplineHelix = 
+    {
+    _T("SplineHelix"),              // Function name
+    NULL,                           // (Not hidden)
+    NULL,                           // (No alias)
+    CDE_ANY,                        // Flags
+    CDE_FUN_SplineHelix,            // Parameter list
+    (int (*)())SplineHelix,         // Function Pointer
+    };
+
+
 static const CDE_code *Functions[] = {
     &CDE_TestSplineLibrary,
+    &CDE_SplineHelix,
 };
 
 
@@ -55,9 +79,9 @@ static const CDE_code *Functions[] = {
 // Main Section
 extern "C" __declspec(dllexport) const CDE_module CDEMODS2_Funcs = 
     {
-    1,                              // Number of functions
+    2,                              // Number of functions
     Functions,                      // Function decl. section
-    1,                              // Number of data types
+    2,                              // Number of data types
     Data,                           // Data declaration section
     0,                              // Number of Applications
     NULL,                           // No Applications

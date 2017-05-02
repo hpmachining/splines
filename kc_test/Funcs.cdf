@@ -4,3 +4,4 @@
 #include "Funcs.h"
 
 int TestSplineLibrary();
+int SplineHelix();

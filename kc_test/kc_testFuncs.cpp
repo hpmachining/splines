@@ -9,6 +9,7 @@
 #include "SMask.h"
 #include "TestUtil.h"
 #include "splines.h"
+#include <fstream>
 
 const double MIN_TOL = .00005;
 
@@ -149,22 +150,22 @@ int TestSplineLibrary() {
 
 		// Test segment split 3d. Works.
 		const size_t degree = 3;
-		std::vector<CKSCoord> split_points;
-		for (size_t i = 0; i < control_points.size() / (degree + 1); ++i) {
-			split_points = bezier::SplitSegment<double>(control_points, .5, i, degree, 3);
-			for (auto j : split_points) {
-				part.AddPoint(j);
-			}
-		}
-		part.NoteState();
+		//std::vector<CKSCoord> split_points;
+		//for (size_t i = 0; i < control_points.size() / (degree + 1); ++i) {
+		//	split_points = bezier::SplitSegment<double>(control_points, .5, i, degree, 3);
+		//	for (auto j : split_points) {
+		//		part.AddPoint(j);
+		//	}
+		//}
+		//part.NoteState();
 
 		// Create spline from calculated coefficients 3d. Works
-		for (size_t i = 0; i < 2; ++i) {
-			std::vector<double> new_coeff = bezier::CalculateCoefficients<double>(split_points, i);
-			std::vector<double> kc_coeff = bezier::ConvertCoefficientLayoutToKC<double>(new_coeff, degree, bezier::k3d);
-			part.AddSpline(true, false, kc_coeff);
-		}
-		part.NoteState();
+		//for (size_t i = 0; i < 2; ++i) {
+		//	std::vector<double> new_coeff = bezier::CalculateCoefficients<double>(split_points, i);
+		//	std::vector<double> kc_coeff = bezier::ConvertCoefficientLayoutToKC<double>(new_coeff, degree, bezier::k3d);
+		//	part.AddSpline(true, false, kc_coeff);
+		//}
+		//part.NoteState();
 
 		// Test tangent and normal functions 3d. Works
 		CKSCoord coordinate;
@@ -172,25 +173,28 @@ int TestSplineLibrary() {
 		CKSCoord normal;
 		CKSCoord curvature;
 		for (size_t i = 0; i < control_points.size() / 4; ++i) {
-			coordinate = bezier::CalculateCoordinate<double>(control_points, .25, i, 3, bezier::k3d);
-			part.AddPoint(coordinate);
-			tangent = bezier::CalculateFirstDerivative<double>(control_points, .25, i, 3, bezier::k3d);
-			normal = bezier::CalculateNormal<double>(control_points, .25, i, 3, bezier::k3d);
-			curvature = bezier::CalculateSecondDerivative<double>(control_points, .25, i, 3, bezier::k3d);
-			tangent.Normalize();
-			normal.Normalize();
-			curvature.Normalize();
-			CKSMatrix temp;
-			CKSMath::MatrixVector(coordinate, coordinate + tangent, temp);
-			CKEntityAttrib attrib;
-			attrib.m_ucColorNumber = 7;
-			part.AddVector(1.0, &temp, &attrib);
-			attrib.m_ucColorNumber = 10;
-			CKSMath::MatrixVector(coordinate, coordinate + normal, temp);
-			part.AddVector(1.0, &temp, &attrib);
-			attrib.m_ucColorNumber = 2;
-			CKSMath::MatrixVector(coordinate, coordinate + curvature, temp);
-			part.AddVector(1.0, &temp, &attrib);
+			for (auto j = 0; j < 5; ++j) {
+				double t = j / 4.0;
+				coordinate = bezier::CalculateCoordinate<double>(control_points, t, i, 3, bezier::k3d);
+				part.AddPoint(coordinate);
+				tangent = bezier::CalculateFirstDerivative<double>(control_points, t, i, 3, bezier::k3d);
+				normal = bezier::CalculateNormal<double>(control_points, t, i, 3, bezier::k3d);
+				curvature = bezier::CalculateSecondDerivative<double>(control_points, t, i, 3, bezier::k3d);
+				tangent.Normalize();
+				normal.Normalize();
+				curvature.Normalize();
+				CKSMatrix temp;
+				CKSMath::MatrixVector(coordinate, coordinate + tangent, temp);
+				CKEntityAttrib attrib;
+				attrib.m_ucColorNumber = 7;
+				part.AddVector(1.0, &temp, &attrib);
+				attrib.m_ucColorNumber = 10;
+				CKSMath::MatrixVector(coordinate, coordinate + normal, temp);
+				part.AddVector(1.0, &temp, &attrib);
+				attrib.m_ucColorNumber = 2;
+				CKSMath::MatrixVector(coordinate, coordinate + curvature, temp);
+				part.AddVector(1.0, &temp, &attrib);
+			}
 		}
 		part.NoteState();
 
@@ -203,4 +207,138 @@ int TestSplineLibrary() {
 		fitPoints.clear();
 	}
 	return status;
+}
+
+int SplineHelix()
+{
+  CWnd* pWnd = AfxGetMainWnd();
+  int status = CKNoError;
+  CKPart part = CKGetActivePart();
+  if (!part.IsValid())
+  {
+    return CK_NO_PART;
+  }
+
+  CKSMatrix worldMat;
+  CKSMask mask;
+  mask.AddEntity(CKMaskLine);
+  mask.AddEntity(CKMaskArc);
+  mask.AddEntity(CKMaskSpline);
+  mask.AddEntity(CKMaskNURBSpline);
+  mask.AddEntity(CKMaskPolyline);
+  mask.AddEntity(CKMaskEllipse);
+  mask.AddEntity(CKMaskParabola);
+  mask.AddEntity(CKMaskHyperbola);
+
+  // Test create helical spline along a 3D curve
+  Events keyCheck;
+  double diameter = 1.0;
+  double pitch = 0.25;
+  CRegistry reg;
+  if (reg.KeyExists(_T("Software\\HPM\\HPMTools\\SplineHelix")))
+  {
+    reg.SetKey(_T("Software\\HPM\\HPMTools\\SplineHelix"), FALSE);
+    diameter = reg.ReadFloat(_T("Diameter"), 1.0);
+    pitch = reg.ReadFloat(_T("Pitch"), .25);
+  }
+  else
+  {
+    reg.CreateKey(_T("Software\\HPM\\HPMTools\\SplineHelix"));
+    reg.SetKey(_T("Software\\HPM\\HPMTools\\SplineHelix"), FALSE);
+    reg.WriteFloat(_T("Diameter"), 1.0);
+    reg.WriteFloat(_T("Pitch"), .25);
+  }
+  int step = 0;
+  while (true)
+  {
+    switch (step)
+    {
+    case 0:
+    {
+      keyCheck = ck_get_input(_T("Enter diameter: "), _T(""), diameter, true, 0, CKS::GreaterThan, 0.0);
+      switch (keyCheck)
+      {
+      case CKBackup:
+      case CKEscape:
+        return keyCheck;
+      case CKNoError:
+      {
+        reg.WriteFloat(_T("Diameter"), diameter);
+        step++;
+        break;
+      }
+      default:
+        return keyCheck;
+      }
+    }
+    case 1:
+    {
+      keyCheck = ck_get_input(_T("Enter pitch: "), _T(""), pitch);
+      switch (keyCheck)
+      {
+      case CKBackup:
+      {
+        step--;
+        continue;
+      }
+      case CKEscape:
+        return keyCheck;
+      case CKNoError:
+      {
+        reg.WriteFloat(_T("Pitch"), pitch);
+        step++;
+        break;
+      }
+      default:
+        return keyCheck;
+      }
+      if (CKSMath::CompareToZero(pitch, .01) <= 0)
+      {
+        pWnd->MessageBox(_T("The pitch entered is too small"), MB_TITLE, MB_OK_INFO);
+        step--;
+        continue;
+      }
+    }
+    case 2:
+    {
+      CKSEntityArray driveCurves;
+      status = part.GenSel(_T("Select the sweep path chain of curves"), driveCurves);
+      switch (status)
+      {
+      case CKNoError:
+        break;
+      case CKBackup:
+      {
+        step--;
+        continue;
+      }
+      default:
+        if ((status < CKMenu1) || (status >= CKEscape))
+          return status;
+        //case CKEscape:
+        //case CK_NO_PART:
+        //  return status;
+      }
+      CKSCoordArray helixPnts;
+      CKSCoord startVec, endVec;
+      status = GetHelicalSplinePoints(part, driveCurves, helixPnts, startVec, endVec, diameter, pitch, .0001);
+      if (helixPnts.size())
+      {
+        std::ofstream out_file("helix.points");
+        for (auto p : helixPnts) {
+          out_file << p.m_dX << '\t' << p.m_dY << '\t' << p.m_dZ << '\n';
+        }
+        CKSEntity helicalSpline;
+        helicalSpline = part.AddSpline(true, false, true, true, startVec, endVec, helixPnts, NULL, &worldMat);
+        //helicalSpline = part.AddSpline(true, false, false, false, startVec, endVec, helixPnts, NULL, &worldMat);
+        if (!helicalSpline.IsValid()) {
+          pWnd->MessageBox(_T("Error creating helical spline"), MB_TITLE, MB_OK_STOP);
+          return CKError;
+        }
+        part.NoteState();
+      }
+    }
+    }
+  }
+  return status;
 }

@@ -2,4 +2,4 @@
 //
 
 int TestSplineLibrary();
-
+int SplineHelix();
