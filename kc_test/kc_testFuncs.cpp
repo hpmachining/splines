@@ -336,6 +336,7 @@ int SplineHelix()
         for (auto p : helixPnts) {
           out_file << p.m_dX << '\t' << p.m_dY << '\t' << p.m_dZ << '\n';
         }
+        time_point<timer> start_time = timer::now();
         size_t point_count = helixPnts.size();
         Points points(3, point_count);
         for (size_t i = 0; i < point_count; ++i) {
@@ -343,44 +344,47 @@ int SplineHelix()
           points(1, i) = helixPnts[i][1];
           points(2, i) = helixPnts[i][2];
         }
-        time_point<timer> start_time = timer::now();
         Spline3d testspline = SplineFitting<Spline3d>::Interpolate(points, 3);
-        time_point<timer> end_time = timer::now();
-        milliseconds elapsed = duration_cast<milliseconds>(end_time - start_time);
-        CString total_time;
-        total_time.Format(_T("Eigen Spline creation time: %d ms\n"), elapsed.count());
-        pWnd->MessageBox(total_time, MB_TITLE, MB_OK_STOP);
         size_t knots_size = testspline.knots().size();
         std::vector<double> knots(knots_size);
-        start_time = timer::now();
         for (size_t j = 0; j < knots_size; ++j) {
           knots[j] = testspline.knots().data()[j];
         }
-        size_t ctrl_size = testspline.ctrls().size();
-        std::vector<CKSCoord> ctrl_points(ctrl_size);
         Matrix<double, -1, -1> control_points = testspline.ctrls();
+        size_t ctrl_size = control_points.cols();
+        std::vector<CKSCoord> ctrl_points(ctrl_size);
         for (size_t j = 0; j < ctrl_size; ++j) {
-          ctrl_points[j].m_dX = control_points(j, 0);
-          ctrl_points[j].m_dY = control_points(j, 1);
-          ctrl_points[j].m_dZ = control_points(j, 2);
+          ctrl_points[j].m_dX = control_points(0, j);
+          ctrl_points[j].m_dY = control_points(1, j);
+          ctrl_points[j].m_dZ = control_points(2, j);
         }
 
         CKSEntity helicalSpline;
-        std::vector<double> weights;
-        helicalSpline = part.AddNURBSpline(3, true, false, knots, ctrl_points, weights);
+        CKEntityAttrib attrib;
+        attrib.m_ucColorNumber = 7;
+        std::vector<double> weights(ctrl_size, 1.0);
+        helicalSpline = part.AddNURBSpline(3, true, false, knots, ctrl_points, weights, &attrib);
+        time_point<timer> end_time = timer::now();
+        milliseconds elapsed = duration_cast<milliseconds>(end_time - start_time);
+        CString eigen_time;
+        eigen_time.Format(_T("Eigen Spline creation time: %d ms\n"), elapsed.count());
+        part.NoteState();
         //helicalSpline = part.AddSpline(true, false, true, true, startVec, endVec, helixPnts, NULL, &worldMat);
         //helicalSpline = part.AddSpline(true, false, false, false, startVec, endVec, helixPnts, NULL, &worldMat);
-        //start_time = timer::now();
-        //helicalSpline = part.AddNURBSpline(3, true, false, helixPnts, NULL, &worldMat);
+        start_time = timer::now();
+        attrib.m_ucColorNumber = 9;
+        helicalSpline = part.AddNURBSpline(3, true, false, helixPnts, &attrib, &worldMat);
         end_time = timer::now();
         elapsed = duration_cast<milliseconds>(end_time - start_time);
-        total_time.Format(_T("Spline creation time: %d ms\n"), elapsed.count());
-        pWnd->MessageBox(total_time, MB_TITLE, MB_OK_STOP);
-        //if (!helicalSpline.IsValid()) {
-        //  pWnd->MessageBox(_T("Error creating helical spline"), MB_TITLE, MB_OK_STOP);
-        //  return CKError;
-        //}
-        //part.NoteState();
+        CString kc_time;
+        kc_time.Format(_T("KC spline time: %d ms\n"), elapsed.count());
+        if (!helicalSpline.IsValid()) {
+          pWnd->MessageBox(_T("Error creating helical spline"), MB_TITLE, MB_OK_STOP);
+          return CKError;
+        }
+        part.NoteState();
+        CString all_time = eigen_time + kc_time;
+        pWnd->MessageBox(all_time, MB_TITLE, MB_OK_STOP);
       }
     }
     }
