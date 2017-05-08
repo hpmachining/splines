@@ -9,6 +9,7 @@
 #include "SMask.h"
 #include "TestUtil.h"
 #include "splines.h"
+#include "SplineHelper.h"
 #include <fstream>
 #include <chrono>
 #include <Eigen/Core>
@@ -28,16 +29,21 @@ int TestSplineLibrary() {
 		return CK_NO_PART;
 	}
 	CKSCoordArray control_points;   // Holds the 4 control points for entire segment
-	CKSEntity spline = SplineSelect(part);
+  //CKSEntity spline = SplineSelect(part);
+  CKSEntityArray curves = CurvesSelect(part);
+  std::vector <double> coeffs;
+  CKSMatrix worldMat;
+  status = GetCoeffFromCurves(part, curves, coeffs, .0000001);
+  CKSEntity spline = part.AddSpline(true, false, coeffs, NULL, &worldMat);
 	if (!spline.IsValid()) {
 		MessageBox(nullptr, _T("Error with spline selection"), _T("Spline Data"), MB_OK_STOP);
 		status = CKError;
 	}
 	else {
-		std::vector <double> coeffs;
 		bool is3D = false;
 		bool isClosed = false;
-		HPMatrix splineMatrix;
+
+    HPMatrix splineMatrix;
 		CKSCoordArray nodePoints;
 		CKSCoord startVector, endVector;
 		part.GetSpline(spline, NULL, coeffs, is3D, isClosed, NULL, &splineMatrix);
@@ -91,15 +97,15 @@ int TestSplineLibrary() {
 		//part.AddPoint(old_tangent);
 		//part.NoteState();
 
-		//// Test 2D spline points
-		//CKSCoord2D cp_2d;
-		//std::vector<CKSCoord2D> points_2d;
-		//for (auto i : control_points) {
-		//	cp_2d.m_dX = i.m_dX;
-		//	cp_2d.m_dY = i.m_dY;
-		//	points_2d.push_back(cp_2d);
-		//}
-		//const size_t degree = 3;
+		// Test 2D spline points
+		CKSCoord2D cp_2d;
+		std::vector<CKSCoord2D> points_2d;
+		for (auto i : control_points) {
+			cp_2d.m_dX = i.m_dX;
+			cp_2d.m_dY = i.m_dY;
+			points_2d.push_back(cp_2d);
+		}
+		const size_t degree = 3;
 
 		//// Test elevate degree 2d. Works
 		//std::vector<CKSCoord2D> elevated_points = bezier::ElevateDegree<double, bezier::Dimension::k2d, degree>(points_2d);
@@ -120,34 +126,37 @@ int TestSplineLibrary() {
 
 		//// Create spline from calculated coefficients 2d
 		//for (size_t i = 0; i < 2; ++i) {
-		//	std::vector<double> new_coeff = bezier::CalculateCoefficients<double>(split_points, i, degree, bezier::k2d);
+		//	std::vector<double> new_coeff = bezier::GetCoefficients<double>(split_points, i, degree, bezier::k2d);
 		//	std::vector<double> kc_coeff = bezier::ConvertCoefficientLayoutToKC<double>(new_coeff, degree, bezier::k2d);
 		//	part.AddSpline(false, false, kc_coeff);
 		//}
 		//part.NoteState();
 
-		//// Test tangent and normal functions 2d. Works
-		//CKSCoord2D coordinate;
-		//CKSCoord2D tangent;
-		//CKSCoord2D normal;
-		//for (size_t i = 0; i < points_2d.size() / 4; ++i) {
-		//	coordinate = bezier::CalculateCoordinate<double>(points_2d, .25, i, degree, bezier::k2d);
-		//	part.AddPoint(coordinate.m_dX, coordinate.m_dY, 0.0);
-		//	tangent = bezier::CalculateFirstDerivative<double>(points_2d, .25, i, degree, bezier::k2d);
-		//	normal = bezier::CalculateNormal<double>(points_2d, .25, i, degree, bezier::k2d);
-		//	CKSMatrix temp;
-		//	CKSCoord v1(coordinate.m_dX, coordinate.m_dY, 0.0);
-		//	CKSCoord v2(tangent.m_dX, tangent.m_dY, 0.0);
-		//	CKSCoord v3(normal.m_dX, normal.m_dY, 0.0);
-		//	CKSMath::MatrixVector(v1, v1 + v2, temp);
-		//	CKEntityAttrib attrib;
-		//	attrib.m_ucColorNumber = 7;
-		//	part.AddVector(1.0, &temp, &attrib);
-		//	attrib.m_ucColorNumber = 10;
-		//	CKSMath::MatrixVector(v1, v1 + v3, temp);
-		//	part.AddVector(1.0, &temp, &attrib);
-		//}
-		//part.NoteState();
+		// Test tangent and normal functions 2d. Works
+		CKSCoord2D coordinate;
+		CKSCoord2D tangent;
+		CKSCoord2D normal;
+		for (size_t i = 0; i < points_2d.size() / 4; ++i) {
+      for (size_t j = 0; j < 4; ++j) {
+        double t = j / 4.0;
+        coordinate = bezier::GetPosition<double>(points_2d, t, i, degree, bezier::k2d);
+        part.AddPoint(coordinate.m_dX, coordinate.m_dY, 0.0);
+        tangent = bezier::GetFirstDerivative<double>(points_2d, t, i, degree, bezier::k2d);
+        normal = bezier::GetNormal<double>(points_2d, t, i, degree, bezier::k2d);
+        CKSMatrix temp;
+        CKSCoord v1(coordinate.m_dX, coordinate.m_dY, 0.0);
+        CKSCoord v2(tangent.m_dX, tangent.m_dY, 0.0);
+        CKSCoord v3(normal.m_dX, normal.m_dY, 0.0);
+        CKSMath::MatrixVector(v1, v1 + v2, temp);
+        CKEntityAttrib attrib;
+        attrib.m_ucColorNumber = 7;
+        part.AddVector(.25, &temp, &attrib);
+        attrib.m_ucColorNumber = 10;
+        CKSMath::MatrixVector(v1, v1 + v3, temp);
+        part.AddVector(.25, &temp, &attrib);
+      }
+		}
+		part.NoteState();
 
 		//// Test elevate degree 3d. Works
 		//CKSCoordArray elevated_points = bezier::ElevateDegree<double, bezier::Dimension::k3d, 3>(control_points);
@@ -157,7 +166,7 @@ int TestSplineLibrary() {
 		//part.NoteState();
 
 		// Test segment split 3d. Works.
-		const size_t degree = 3;
+		//const size_t degree = 3;
 		//std::vector<CKSCoord> split_points;
 		//for (size_t i = 0; i < control_points.size() / (degree + 1); ++i) {
 		//	split_points = bezier::SplitSegment<double>(control_points, .5, i, degree, 3);
@@ -169,45 +178,61 @@ int TestSplineLibrary() {
 
 		// Create spline from calculated coefficients 3d. Works
 		//for (size_t i = 0; i < 2; ++i) {
-		//	std::vector<double> new_coeff = bezier::CalculateCoefficients<double>(split_points, i);
+		//	std::vector<double> new_coeff = bezier::GetCoefficients<double>(split_points, i);
 		//	std::vector<double> kc_coeff = bezier::ConvertCoefficientLayoutToKC<double>(new_coeff, degree, bezier::k3d);
 		//	part.AddSpline(true, false, kc_coeff);
 		//}
 		//part.NoteState();
 
-		// Test tangent and normal functions 3d. Works
-		CKSCoord coordinate;
-		CKSCoord tangent;
-		CKSCoord normal;
-		CKSCoord curvature;
-		for (size_t i = 0; i < control_points.size() / 4; ++i) {
-			for (auto j = 0; j < 5; ++j) {
-				double t = j / 4.0;
-				coordinate = bezier::CalculateCoordinate<double>(control_points, t, i, 3, bezier::k3d);
-				part.AddPoint(coordinate);
-				tangent = bezier::CalculateFirstDerivative<double>(control_points, t, i, 3, bezier::k3d);
-				normal = bezier::CalculateNormal<double>(control_points, t, i, 3, bezier::k3d);
-				curvature = bezier::CalculateSecondDerivative<double>(control_points, t, i, 3, bezier::k3d);
-				tangent.Normalize();
-				normal.Normalize();
-				curvature.Normalize();
-				CKSMatrix temp;
-				CKSMath::MatrixVector(coordinate, coordinate + tangent, temp);
-				CKEntityAttrib attrib;
-				attrib.m_ucColorNumber = 7;
-				part.AddVector(1.0, &temp, &attrib);
-				attrib.m_ucColorNumber = 10;
-				CKSMath::MatrixVector(coordinate, coordinate + normal, temp);
-				part.AddVector(1.0, &temp, &attrib);
-				attrib.m_ucColorNumber = 2;
-				CKSMath::MatrixVector(coordinate, coordinate + curvature, temp);
-				part.AddVector(1.0, &temp, &attrib);
-			}
-		}
-		part.NoteState();
+		//// Test tangent and normal functions 3d. Works
+		//CKSCoord coordinate;
+		//CKSCoord tangent;
+		//CKSCoord normal;
+		//CKSCoord curvature;
+		//for (size_t i = 0; i < control_points.size() / 4; ++i) {
+		//	for (auto j = 0; j < 5; ++j) {
+		//		double t = j / 4.0;
+		//		coordinate = bezier::GetPosition<double>(control_points, t, i, 3, bezier::k3d);
+		//		part.AddPoint(coordinate);
+		//		tangent = bezier::GetFirstDerivative<double>(control_points, t, i, 3, bezier::k3d);
+		//		normal = bezier::GetNormal<double>(control_points, t, i, 3, bezier::k3d);
+		//		curvature = bezier::GetSecondDerivative<double>(control_points, t, i, 3, bezier::k3d);
+		//		tangent.Normalize();
+		//		normal.Normalize();
+		//		curvature.Normalize();
+		//		CKSMatrix temp;
+		//		CKSMath::MatrixVector(coordinate, coordinate + tangent, temp);
+		//		CKEntityAttrib attrib;
+		//		attrib.m_ucColorNumber = 7;
+		//		part.AddVector(1.0, &temp, &attrib);
+		//		attrib.m_ucColorNumber = 10;
+		//		CKSMath::MatrixVector(coordinate, coordinate + normal, temp);
+		//		part.AddVector(1.0, &temp, &attrib);
+		//		//attrib.m_ucColorNumber = 2;
+		//		//CKSMath::MatrixVector(coordinate, coordinate + curvature, temp);
+		//		//part.AddVector(1.0, &temp, &attrib);
+		//	}
+		//}
+    //part.DeleteEntity(spline);
+    //part.NoteState();
 
-		WriteData("nodes.dat", nodePoints);
+    size_t coeffs_size = coeffs.size();
+    size_t coeff_segment_size = (degree + 1) * 3;
+    std::vector<double> quad_coeffs(3);
+    std::vector<double> t_values;
+    for (size_t i = 0; i < coeffs_size; i += 4) {
+      for (size_t j = 0; j < 3; ++j) {
+        quad_coeffs[j] = coeffs[i + j] * (3 - j);
+      }
+      status = bezier::SolveQuadratic(quad_coeffs, t_values);
+    }
+    auto t_end = std::remove_if(t_values.begin(), t_values.end(), [](double a) {
+      return (a <= 0.0 || a >= 1.0);
+    });
+    t_values.erase(t_end, t_values.end());
+    WriteData("nodes.dat", nodePoints);
 		WriteCoefficients("coeff.dat", coeffs);
+    WriteCoefficients("quadratic_solutions.dat", t_values);
 		WriteControlPoints("ctrl.dat", control_points);
 		CKSCoordArray fitPoints;
 		SplineToPoints(part, spline, fitPoints);
@@ -344,48 +369,49 @@ int SplineHelix()
         CKSEntity helicalSpline;
         CKEntityAttrib attrib;
 
-        //size_t point_count = helixPnts.size();
-        //Points points(3, point_count);
-        //for (size_t i = 0; i < point_count; ++i) {
-        //  points(0, i) = helixPnts[i][0];
-        //  points(1, i) = helixPnts[i][1];
-        //  points(2, i) = helixPnts[i][2];
-        //}
-        //Spline3d testspline = SplineFitting<Spline3d>::Interpolate(points, 3);
-        //size_t knots_size = testspline.knots().size();
-        //std::vector<double> knots(knots_size);
-        //for (size_t j = 0; j < knots_size; ++j) {
-        //  knots[j] = testspline.knots().data()[j];
-        //}
-        //Matrix<double, -1, -1> control_points = testspline.ctrls();
-        //size_t ctrl_size = control_points.cols();
-        //std::vector<CKSCoord> ctrl_points(ctrl_size);
-        //for (size_t j = 0; j < ctrl_size; ++j) {
-        //  ctrl_points[j].m_dX = control_points(0, j);
-        //  ctrl_points[j].m_dY = control_points(1, j);
-        //  ctrl_points[j].m_dZ = control_points(2, j);
-        //}
-        //attrib.m_ucColorNumber = 7;
-        //std::vector<double> weights(ctrl_size, 1.0);
-        //helicalSpline = part.AddNURBSpline(3, true, false, knots, ctrl_points, weights, &attrib);
-        //end_time = timer::now();
-        //elapsed = duration_cast<milliseconds>(end_time - start_time);
-        //eigen_time.Format(_T("Eigen Spline creation time: %d ms\n"), elapsed.count());
-        //part.NoteState();
-
-        //helicalSpline = part.AddSpline(true, false, true, true, startVec, endVec, helixPnts, NULL, &worldMat);
-        //helicalSpline = part.AddSpline(true, false, false, false, startVec, endVec, helixPnts, NULL, &worldMat);
         start_time = timer::now();
-        attrib.m_ucColorNumber = 9;
-        helicalSpline = part.AddNURBSpline(3, true, false, helixPnts, &attrib, &worldMat);
+        size_t point_count = helixPnts.size();
+        Points points(3, point_count);
+        for (size_t i = 0; i < point_count; ++i) {
+          points(0, i) = helixPnts[i][0];
+          points(1, i) = helixPnts[i][1];
+          points(2, i) = helixPnts[i][2];
+        }
+        Spline3d testspline = SplineFitting<Spline3d>::Interpolate(points, 3);
+        size_t knots_size = testspline.knots().size();
+        std::vector<double> knots(knots_size);
+        for (size_t j = 0; j < knots_size; ++j) {
+          knots[j] = testspline.knots().data()[j];
+        }
+        Matrix<double, -1, -1> control_points = testspline.ctrls();
+        size_t ctrl_size = control_points.cols();
+        std::vector<CKSCoord> ctrl_points(ctrl_size);
+        for (size_t j = 0; j < ctrl_size; ++j) {
+          ctrl_points[j].m_dX = control_points(0, j);
+          ctrl_points[j].m_dY = control_points(1, j);
+          ctrl_points[j].m_dZ = control_points(2, j);
+        }
+        attrib.m_ucColorNumber = 7;
+        std::vector<double> weights(ctrl_size, 1.0);
+        helicalSpline = part.AddNURBSpline(3, true, false, knots, ctrl_points, weights, &attrib);
         end_time = timer::now();
         elapsed = duration_cast<milliseconds>(end_time - start_time);
-        kc_time.Format(_T("KC spline time: %d ms\n"), elapsed.count());
+        eigen_time.Format(_T("Eigen Spline creation time: %d ms\n"), elapsed.count());
+        part.NoteState();
+        helicalSpline = part.AddSpline(true, false, true, true, startVec, endVec, helixPnts, NULL, &worldMat);
+        part.NoteState();
+        //helicalSpline = part.AddSpline(true, false, false, false, startVec, endVec, helixPnts, NULL, &worldMat);
+        //start_time = timer::now();
+        //attrib.m_ucColorNumber = 9;
+        //helicalSpline = part.AddNURBSpline(3, true, false, helixPnts, &attrib, &worldMat);
+        //end_time = timer::now();
+        //elapsed = duration_cast<milliseconds>(end_time - start_time);
+        //kc_time.Format(_T("KC spline time: %d ms\n"), elapsed.count());
+        //part.NoteState();
         if (!helicalSpline.IsValid()) {
           pWnd->MessageBox(_T("Error creating helical spline"), MB_TITLE, MB_OK_STOP);
           return CKError;
         }
-        part.NoteState();
         CString all_time = eigen_time + kc_time;
         //CString all_time = eigen_time;
         pWnd->MessageBox(all_time, MB_TITLE, MB_OK_STOP);

@@ -13,8 +13,26 @@ CKSEntity SplineSelect(CKPart& part) {
     CKSDrawInst nullInst;
     CKSMask mask;
     mask.AddEntity(CKMaskSpline);
+    mask.AddEntity(CKMaskNURBSpline);
     part.GetEnt(_T("Select Spline"), entity, nullInst);
     return entity;
+}
+
+CKSEntityArray CurvesSelect(CKPart& part) {
+  CKSEntityArray curves;
+  CKSDrawInst nullInst;
+  CKSMask mask;
+  mask.AddEntity(CKMaskLine);
+  mask.AddEntity(CKMaskArc);
+  mask.AddEntity(CKMaskSpline);
+  mask.AddEntity(CKMaskNURBSpline);
+  mask.AddEntity(CKMaskPolyline);
+  mask.AddEntity(CKMaskEllipse);
+  mask.AddEntity(CKMaskParabola);
+  mask.AddEntity(CKMaskHyperbola);
+  part.GenSel(_T("Select the sweep path chain of curves"), curves);
+  mask.Clear();
+  return curves;
 }
 
 void WriteData(const std::string& dataFile, const std::vector<CKSCoord>& points) {

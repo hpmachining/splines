@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <iostream>
+#include <limits>
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
 
@@ -17,18 +18,27 @@ enum Dimension {
 
 using Eigen::Dynamic;
 
-//template <typename Point>
-//bool IsSegmentDataValid(const std::vector<Point>& points, size_t order, const size_t segment_id);
-//
-//template <typename RealScalar, size_t degree>
-//Eigen::Matrix<RealScalar, Eigen::Dynamic, Eigen::Dynamic> GetPowerCoefficients();
-//
-//template <typename RealScalar, size_t degree>
-//Eigen::Matrix<RealScalar, degree, degree> GetTangentCoefficients();
-//
-//template <typename RealScalar, size_t degree>
-//Eigen::DiagonalMatrix<RealScalar, Eigen::Dynamic> GetBinomialCoefficients();
+template <typename Point>
+bool IsSegmentDataValid(const std::vector<Point>& points, size_t order, const size_t segment_id);
 
+template <typename RealScalar>
+Eigen::Matrix<RealScalar, Dynamic, Dynamic> GetTangentCoefficients(const size_t degree);
+
+template <typename RealScalar>
+Eigen::Matrix<RealScalar, Dynamic, Dynamic> GetSecondDerivativeCoefficients(const size_t degree);
+  
+template <typename RealScalar>
+Eigen::Matrix<RealScalar, Dynamic, Dynamic> GetPowerCoefficients(const size_t degree);
+
+template <typename RealScalar>
+Eigen::DiagonalMatrix<RealScalar, Dynamic> GetBinomialCoefficients(const size_t degree);
+
+template<typename RealScalar>
+std::vector<RealScalar> ConvertCoefficientLayoutToKC(const std::vector<RealScalar>& coefficients,
+  const size_t degree, const size_t dimension);
+
+template<typename RealScalar>
+int SolveQuadratic(const std::vector<RealScalar>& coefficients, std::vector<RealScalar>& solutions);
 
 template <typename Point>
 bool IsSegmentDataValid(const std::vector<Point>& points, const size_t order, const size_t segment_id) {
@@ -66,9 +76,9 @@ Eigen::Matrix<RealScalar, Dynamic, Dynamic> GetSecondDerivativeCoefficients(cons
 }
 
 template <typename RealScalar>
-Eigen::Matrix<RealScalar, Eigen::Dynamic, Eigen::Dynamic> GetPowerCoefficients(const size_t degree) {
+Eigen::Matrix<RealScalar, Dynamic, Dynamic> GetPowerCoefficients(const size_t degree) {
 	const size_t order = degree + 1;
-	Eigen::Matrix<RealScalar, Eigen::Dynamic, Eigen::Dynamic> coefficients;
+	Eigen::Matrix<RealScalar, Dynamic, Dynamic> coefficients;
 	coefficients.resize(order, order);
 	coefficients = GetBinomialCoefficients<RealScalar>(degree);
 	for (size_t i = 1; i < order; ++i) {
@@ -81,9 +91,9 @@ Eigen::Matrix<RealScalar, Eigen::Dynamic, Eigen::Dynamic> GetPowerCoefficients(c
 }
 
 template<typename RealScalar>
-Eigen::DiagonalMatrix<RealScalar, Eigen::Dynamic> GetBinomialCoefficients(const size_t degree) {
+Eigen::DiagonalMatrix<RealScalar, Dynamic> GetBinomialCoefficients(const size_t degree) {
 	const size_t order = degree + 1;
-	Eigen::DiagonalMatrix<RealScalar, Eigen::Dynamic> coefficients;
+	Eigen::DiagonalMatrix<RealScalar, Dynamic> coefficients;
 	coefficients.resize(order);
 	coefficients.diagonal()[0] = 1;
 	for (size_t i = 0; i < degree; ++i) {
@@ -116,6 +126,27 @@ std::vector<RealScalar> ConvertCoefficientLayoutToKC(const std::vector<RealScala
 		}
 	}
 	return sorted;
+}
+
+template<typename RealScalar>
+int SolveQuadratic(const std::vector<RealScalar>& coefficients, std::vector<RealScalar>& solutions) { 
+  if (coefficients.size() != 3) {
+    return 1;
+  }
+  RealScalar a = coefficients[0];
+  RealScalar b = coefficients[1];
+  RealScalar c = coefficients[2];
+  RealScalar t;
+
+  t = (-b + std::sqrt(b * b - 4 * a * c)) / (2 * a);
+  //if (!std::isnan(t)) {
+    solutions.push_back(t);
+  //}
+  t = (-b - (std::sqrt(b * b - 4 * a * c))) / (2 * a);
+  //if (!std::isnan(t)) {
+    solutions.push_back(t);
+  //}
+  return 0;
 }
 
 } // end namespace bezier

@@ -10,6 +10,7 @@
 
 
 CKSEntity SplineSelect(CKPart& part);
+CKSEntityArray CurvesSelect(CKPart& part);
 void WriteData(const std::string& dataFile, const std::vector<CKSCoord>& points);
 void WriteControlPoints(const std::string& dataFile, const std::vector<CKSCoord>& points);
 void WriteCoefficients(const std::string& dataFile, const std::vector<double>& points);

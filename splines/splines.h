@@ -19,28 +19,36 @@ A collection of templated functions for working with Bézier curves.
 namespace bezier {
 
 template <typename RealScalar, typename Point>
-std::vector<RealScalar> CalculateCoefficients(const std::vector<Point>& points,
-	const size_t segment_id = 1, const size_t degree = 3, const size_t dimension = k3d);
+std::vector<RealScalar> GetCoefficients(const std::vector<Point>& points,
+	const size_t segment_id = 0, const size_t degree = 3, const size_t dimension = k3d);
 
 template <typename RealScalar, typename Point>
-Point CalculateCoordinate(const std::vector<Point>& points, const RealScalar t, 
-	const size_t segment_id = 1, const size_t degree = 3, const size_t dimension = k3d);
+Point GetPosition(const std::vector<Point>& points, const RealScalar t, 
+	const size_t segment_id = 0, const size_t degree = 3, const size_t dimension = k3d);
 
 template <typename RealScalar, typename Point>
-Point CalculateFirstDerivative(const std::vector<Point>& points, const RealScalar t, 
-	const size_t segment_id = 1, const size_t degree = 3, const size_t dimension = k3d);
+Point GetFirstDerivative(const std::vector<Point>& points, const RealScalar t, 
+	const size_t segment_id = 0, const size_t degree = 3, const size_t dimension = k3d);
 
 template <typename RealScalar, typename Point>
-Point CalculateSecondDerivative(const std::vector<Point>& points, const RealScalar t,
-	const size_t segment_id = 1, const size_t degree = 3, const size_t dimension = k3d);
+Point GetSecondDerivative(const std::vector<Point>& points, const RealScalar t,
+	const size_t segment_id = 0, const size_t degree = 3, const size_t dimension = k3d);
 
 template <typename RealScalar, typename Point>
-Point CalculateNormal(const std::vector<Point>& points, const RealScalar t,
-	const size_t segment_id = 1, const size_t degree = 3, const size_t dimension = k3d);
+Point GetNormal(const std::vector<Point>& points, const RealScalar t,
+	const size_t segment_id = 0, const size_t degree = 3, const size_t dimension = k3d);
+
+template <typename RealScalar, typename Point>
+Point Get2dNormal(const std::vector<Point>& points, const RealScalar t,
+  const size_t segment_id = 0, const size_t degree = 3);
+
+template <typename RealScalar, typename Point>
+Point Get3dNormal(const std::vector<Point>& points, const RealScalar t,
+  const size_t segment_id = 0, const size_t degree = 3);
 
 template <typename RealScalar, typename Point>
 std::vector<Point> SplitSegment(const std::vector<Point>& points, const RealScalar t, 
-	const size_t segment_id = 1, size_t degree = 3, size_t dimension = k3d);
+	const size_t segment_id = 0, size_t degree = 3, size_t dimension = k3d);
 
 template <typename RealScalar, Dimension dimension, size_t degree, typename Point>
 std::vector<Point> ElevateDegree(const std::vector<Point>& points);
@@ -64,7 +72,7 @@ std::vector<Point> ElevateDegree(const std::vector<Point>& points);
 		3d curves will have \f$n \cdot 3\f$ coefficients and 2d curves will have \f$n \cdot 2\f$.
 */
 template <typename RealScalar, typename Point>
-std::vector<RealScalar> CalculateCoefficients(const std::vector<Point>& points, 
+std::vector<RealScalar> GetCoefficients(const std::vector<Point>& points, 
 	const size_t segment_id, const size_t degree, const size_t dimension) {
 	const size_t order = degree + 1;
 	std::vector<RealScalar> coefficients;
@@ -115,7 +123,7 @@ std::vector<RealScalar> CalculateCoefficients(const std::vector<Point>& points,
 @return	Coordinate of type *Point* for the calculated position.
 */
 template <typename RealScalar, typename Point>
-Point CalculateCoordinate(const std::vector<Point>& points, const RealScalar t, 
+Point GetPosition(const std::vector<Point>& points, const RealScalar t, 
 	const size_t segment_id, const size_t degree, const size_t dimension){
 	const size_t order = degree + 1;
 	Point coordinate;
@@ -167,7 +175,7 @@ Point CalculateCoordinate(const std::vector<Point>& points, const RealScalar t,
 @return	Coordinate of type *Point* for the calculated tangent vector.
 */
 template <typename RealScalar, typename Point>
-Point CalculateFirstDerivative(const std::vector<Point>& points, const RealScalar t,
+Point GetFirstDerivative(const std::vector<Point>& points, const RealScalar t,
 	const size_t segment_id, const size_t degree, const size_t dimension) {
 	const size_t order = degree + 1;
 	Point tangent;
@@ -177,7 +185,7 @@ Point CalculateFirstDerivative(const std::vector<Point>& points, const RealScala
 	}
 	// Get coeffecients of specified segment
 	std::vector<RealScalar> coefficients;
-	coefficients = CalculateCoefficients<RealScalar>(points, segment_id, degree, dimension);
+	coefficients = GetCoefficients<RealScalar>(points, segment_id, degree, dimension);
 	// Create and fill Eigen matrix with coefficients
 	Eigen::Matrix<RealScalar, Dynamic, Dynamic> C(degree, dimension);
 	for (size_t i = 0, p = 0; p < degree; i += dimension, ++p) {
@@ -221,7 +229,7 @@ Point CalculateFirstDerivative(const std::vector<Point>& points, const RealScala
 @return	Coordinate of type *Point* for the calculated second derivative.
 */
 template <typename RealScalar, typename Point>
-Point CalculateSecondDerivative(const std::vector<Point>& points, const RealScalar t,
+Point GetSecondDerivative(const std::vector<Point>& points, const RealScalar t,
 	const size_t segment_id, const size_t degree, const size_t dimension) {
 	const size_t order = degree + 1;
 	const size_t matrix_size = degree - 1;
@@ -232,7 +240,7 @@ Point CalculateSecondDerivative(const std::vector<Point>& points, const RealScal
 	}
 	// Get coeffecients of specified segment
 	std::vector<RealScalar> coefficients;
-	coefficients = CalculateCoefficients<RealScalar>(points, segment_id, degree, dimension);
+	coefficients = GetCoefficients<RealScalar>(points, segment_id, degree, dimension);
 	// Create and fill Eigen matrix with coefficients
 	Eigen::Matrix<RealScalar, Dynamic, Dynamic> C(degree, dimension);
 	for (size_t i = 0, p = 0; p < degree; i += dimension, ++p) {
@@ -275,7 +283,7 @@ Point CalculateSecondDerivative(const std::vector<Point>& points, const RealScal
 @return	Coordinate of type *Point* for the calculated tangent vector.
 */
 template <typename RealScalar, typename Point>
-Point CalculateNormal(const std::vector<Point>& points, const RealScalar t,
+Point GetNormal(const std::vector<Point>& points, const RealScalar t,
 	const size_t segment_id, const size_t degree, const size_t dimension) {
 	const size_t order = degree + 1;
 	Point normal;
@@ -283,48 +291,173 @@ Point CalculateNormal(const std::vector<Point>& points, const RealScalar t,
 	if (!IsSegmentDataValid(points, order, segment_id)) {
 		return normal;
 	}
-	// Get coordinate and tangent of curve at specified t parameter
-	RealScalar next_t = t - .0001;
-	Point coord_1 = CalculateCoordinate<RealScalar>(points, t, segment_id, degree, dimension);
-	Point coord_2 = CalculateCoordinate<RealScalar>(points, next_t, segment_id, degree, dimension);
-	Point tan_1 = CalculateFirstDerivative<RealScalar>(points, t, segment_id, degree, dimension);
-	Point tan_2 = CalculateFirstDerivative<RealScalar>(points, next_t, segment_id, degree, dimension);
-	// Copy to Eigen matrices
-	Eigen::Matrix<RealScalar, 3, 1> tangent = Eigen::Matrix<RealScalar, 3, 1>::Zero();
-	Eigen::Matrix<RealScalar, 3, 1> next_tangent = Eigen::Matrix<RealScalar, 3, 1>::Zero();
-	Eigen::Matrix<RealScalar, 3, 1> coordinate = Eigen::Matrix<RealScalar, 3, 1>::Zero();
-	Eigen::Matrix<RealScalar, 3, 1> next_coordinate = Eigen::Matrix<RealScalar, 3, 1>::Zero();
-	for (size_t i = 0; i < dimension; ++i) {
-		tangent(i, 0) = tan_1[i];
-		next_tangent(i, 0) = tan_2[i];
-		coordinate(i, 0) = coord_1[i];
-		next_coordinate(i, 0) = coord_2[i];
-	}
+  switch (dimension) {
+  case k2d:
+    normal = Get2dNormal(points, t, segment_id, degree);
+    break;
+  case k3d:
+    normal = Get3dNormal(points, t, segment_id, degree);
+  }
+	//// Get coordinate and tangent of curve at specified t parameter
+	//Point coord_1 = GetPosition<RealScalar>(points, t, segment_id, degree, dimension);
+ // Point tan_1 = GetFirstDerivative<RealScalar>(points, t, segment_id, degree, dimension);
+ // 
+ // RealScalar next_t = t - .0001;
+ // Point coord_2 = GetPosition<RealScalar>(points, next_t, segment_id, degree, dimension);
+	//Point tan_2 = GetFirstDerivative<RealScalar>(points, next_t, segment_id, degree, dimension);
+	//// Copy to Eigen matrices
+	//Eigen::Matrix<RealScalar, 3, 1> tangent = Eigen::Matrix<RealScalar, 3, 1>::Zero();
+	//Eigen::Matrix<RealScalar, 3, 1> next_tangent = Eigen::Matrix<RealScalar, 3, 1>::Zero();
+	//Eigen::Matrix<RealScalar, 3, 1> coordinate = Eigen::Matrix<RealScalar, 3, 1>::Zero();
+	//Eigen::Matrix<RealScalar, 3, 1> next_coordinate = Eigen::Matrix<RealScalar, 3, 1>::Zero();
+	//for (size_t i = 0; i < dimension; ++i) {
+	//	tangent(i, 0) = tan_1[i];
+	//	next_tangent(i, 0) = tan_2[i];
+	//	coordinate(i, 0) = coord_1[i];
+	//	next_coordinate(i, 0) = coord_2[i];
+	//}
 
-	Eigen::Matrix<RealScalar, 3, 1> offset;
-	offset = coordinate - next_coordinate;
-	next_tangent += offset;
-	tangent.normalize();
-	next_tangent.normalize();
-	Eigen::Matrix<RealScalar, 3, 1> z_axis;
-	z_axis = tangent.cross(next_tangent);
-	z_axis.normalize();
-	
-	// Create rotation matrix
-	//Eigen::Matrix<RealScalar, Dynamic, Dynamic> transform;
-	Eigen::Transform<RealScalar, 3, Eigen::Affine> transform;
-	//transform.resize(dimension + 1, dimension + 1);
-	transform.setIdentity();
-	Eigen::AngleAxis<RealScalar> rotation(M_PI_2, z_axis);
-	transform.rotate(rotation);
-	Eigen::Matrix<RealScalar, 3, 1> result;
-	result = transform * tangent;
-	result.normalize();
-	for (size_t i = 0; i < dimension; ++i) {
-		normal[i] = result(i, 0);
-	}
+	//Eigen::Matrix<RealScalar, 3, 1> offset;
+	//offset = coordinate - next_coordinate;
+	//next_tangent += offset;
+	//tangent.normalize();
+	//next_tangent.normalize();
+	//Eigen::Matrix<RealScalar, 3, 1> z_axis;
+	//z_axis = tangent.cross(next_tangent);
+	//z_axis.normalize();
+	//
+	//// Create rotation matrix
+	////Eigen::Matrix<RealScalar, Dynamic, Dynamic> transform;
+	//Eigen::Transform<RealScalar, 3, Eigen::Affine> transform;
+	////transform.resize(dimension + 1, dimension + 1);
+	//transform.setIdentity();
+	//Eigen::AngleAxis<RealScalar> rotation(M_PI_2, z_axis);
+	//transform.rotate(rotation);
+	//Eigen::Matrix<RealScalar, 3, 1> result;
+	//result = transform * tangent;
+	//result.normalize();
+	//for (size_t i = 0; i < dimension; ++i) {
+	//	normal[i] = result(i, 0);
+	//}
 
 	return normal;
+}
+
+/**
+@brief	Get the 3d normal vector on a segment of a composite Bézier curve.
+
+This function returns the 3d normal vector at parameter \f$t\f$ on a Bézier curve segment.
+
+@tparam RealScalar Type of data being passed in. Valid types are float and double.
+@tparam Point Container type for the points. Must have [] accessor. [0] = x, [1] = y and [2] = z.
+@param	points Control points. Number of control points for each segment should be \f$degree + 1\f$
+@param	t Parameter in the range \f$0 \le t \le 1\f$ for a point on the curve segment. Values
+outside of this range may be used to calculate a coordinate on a natural extension of the
+curve segment.
+@param	segment_id Indicates which segment of the composite Bézier curve to process. Numbering
+starts at 0.
+@param	degree Degree of the Bézier curve.
+@return	Coordinate of type *Point* for the calculated tangent vector.
+*/
+template <typename RealScalar, typename Point>
+Point Get3dNormal(const std::vector<Point>& points, const RealScalar t,
+  const size_t segment_id, const size_t degree) {
+  const size_t dimension = bezier::k3d;
+  const size_t order = degree + 1;
+  Point normal;
+  normal[0] = std::numeric_limits<RealScalar>::quiet_NaN();
+  if (!IsSegmentDataValid(points, order, segment_id)) {
+    return normal;
+  }
+  // Get coordinate and tangent of curve at specified t parameter
+  Point coord_1 = GetPosition<RealScalar>(points, t, segment_id, degree, dimension);
+  Point tan_1 = GetFirstDerivative<RealScalar>(points, t, segment_id, degree, dimension);
+
+  RealScalar next_t = t - .0001;
+  Point coord_2 = GetPosition<RealScalar>(points, next_t, segment_id, degree, dimension);
+  Point tan_2 = GetFirstDerivative<RealScalar>(points, next_t, segment_id, degree, dimension);
+  // Copy to Eigen matrices
+  Eigen::Matrix<RealScalar, 3, 1> tangent = Eigen::Matrix<RealScalar, 3, 1>::Zero();
+  Eigen::Matrix<RealScalar, 3, 1> next_tangent = Eigen::Matrix<RealScalar, 3, 1>::Zero();
+  Eigen::Matrix<RealScalar, 3, 1> coordinate = Eigen::Matrix<RealScalar, 3, 1>::Zero();
+  Eigen::Matrix<RealScalar, 3, 1> next_coordinate = Eigen::Matrix<RealScalar, 3, 1>::Zero();
+  for (size_t i = 0; i < dimension; ++i) {
+    tangent(i, 0) = tan_1[i];
+    next_tangent(i, 0) = tan_2[i];
+    coordinate(i, 0) = coord_1[i];
+    next_coordinate(i, 0) = coord_2[i];
+  }
+
+  Eigen::Matrix<RealScalar, 3, 1> offset;
+  offset = coordinate - next_coordinate;
+  next_tangent += offset;
+  tangent.normalize();
+  next_tangent.normalize();
+  Eigen::Matrix<RealScalar, 3, 1> z_axis;
+  z_axis = tangent.cross(next_tangent);
+  z_axis.normalize();
+
+  // Create rotation matrix
+  Eigen::Transform<RealScalar, 3, Eigen::Affine> transform;
+  transform.setIdentity();
+  Eigen::AngleAxis<RealScalar> rotation(M_PI_2, z_axis);
+  transform.rotate(rotation);
+  Eigen::Matrix<RealScalar, 3, 1> result;
+  result = transform * tangent;
+  result.normalize();
+  for (size_t i = 0; i < dimension; ++i) {
+    normal[i] = result(i, 0);
+  }
+
+  return normal;
+}
+
+/**
+@brief	Get the 2d normal vector on a segment of a composite Bézier curve.
+
+This function returns the 2d normal vector at parameter \f$t\f$ on a Bézier curve segment.
+
+@tparam RealScalar Type of data being passed in. Valid types are float and double.
+@tparam Point Container type for the points. Must have [] accessor. [0] = x, [1] = y.
+@param	points Control points. Number of control points for each segment should be \f$degree + 1\f$
+@param	t Parameter in the range \f$0 \le t \le 1\f$ for a point on the curve segment. Values
+outside of this range may be used to calculate a coordinate on a natural extension of the
+curve segment.
+@param	segment_id Indicates which segment of the composite Bézier curve to process. Numbering
+starts at 0.
+@param	degree Degree of the Bézier curve.
+@return	Coordinate of type *Point* for the calculated tangent vector.
+*/
+template <typename RealScalar, typename Point>
+Point Get2dNormal(const std::vector<Point>& points, const RealScalar t,
+  const size_t segment_id, const size_t degree) {
+  const size_t dimension = bezier::k2d;
+  const size_t order = degree + 1;
+  Point normal;
+  normal[0] = std::numeric_limits<RealScalar>::quiet_NaN();
+  if (!IsSegmentDataValid(points, order, segment_id)) {
+    return normal;
+  }
+  // Get coordinate and tangent of curve at specified t parameter
+  Point coord_1 = GetPosition<RealScalar>(points, t, segment_id, degree, dimension);
+  Point tan_1 = GetFirstDerivative<RealScalar>(points, t, segment_id, degree, dimension);
+
+  // Copy to Eigen matrices
+  Eigen::Matrix<RealScalar, 2, 1> tangent;
+  Eigen::Matrix<RealScalar, 2, 1> coordinate;
+  for (size_t i = 0; i < dimension; ++i) {
+    tangent(i, 0) = tan_1[i];
+    coordinate(i, 0) = coord_1[i];
+  }
+  tangent.normalize();
+
+  Eigen::Matrix<RealScalar, 2, 1> result = Eigen::Rotation2D<RealScalar>::Rotation2D(M_PI_2) * tangent;
+  result.normalize();
+  for (size_t i = 0; i < dimension; ++i) {
+    normal[i] = result(i, 0);
+  }
+
+  return normal;
 }
 
 /**

@@ -37,9 +37,9 @@ void TestDegreeElevation() {
 		std::cout << i[0] << " " << i[1] << "\n";
 	}
 	for (auto i = 0.0; i <= 1.0; i += .25) {
-		Point coord = bezier::CalculateCoordinate<double>(elevated_points, i, 0, 3, dimension);
-		Point first = bezier::CalculateFirstDerivative<double>(elevated_points, i, 0, 3, dimension);
-		Point second = bezier::CalculateSecondDerivative<double>(elevated_points, i, 0, 3, dimension);
+		Point coord = bezier::GetPosition<double>(elevated_points, i, 0, 3, dimension);
+		Point first = bezier::GetFirstDerivative<double>(elevated_points, i, 0, 3, dimension);
+		Point second = bezier::GetSecondDerivative<double>(elevated_points, i, 0, 3, dimension);
 		std::cout << "t = " << i << "\n";
 		std::cout << "Coordinate = x: " << coord.x() << " y: " << coord.y() << "\n";
 		std::cout << "first derivative = x: " << first.x() << " y: " << first.y() << "\n";
@@ -80,7 +80,7 @@ void TestDegreeElevation() {
 	//		}
 	//	}
 	//	// Get coefficients
-	//	std::vector<double> coeff = bezier::CalculateCoefficients<double>(elevated_points, 0, 3, 2);
+	//	std::vector<double> coeff = bezier::GetCoefficients<double>(elevated_points, 0, 3, 2);
 	//	for (auto c : coeff) {
 	//		std::cout << c << "\n";
 	//	}
@@ -215,6 +215,21 @@ void TestFirstDerivative() {
 
 }
 
+void GnuPlotPoints() {
+  const double G = 120.0;
+  const double ER = 180.0;
+  double T;
+  std::cout << std::fixed << std::setprecision(6);
+  for (double x = 150.0; x <= 200.; x += 1.0) {
+    for (double y = -70.0; y <= -50.0; y += .5) {
+      T = (G / 2.)*(y + (G / 2.)) / (ER*ER - 2.*ER*x + G*y + (G*G / 4.) + x*x + y*y);
+      std::cout << '\n' << T;
+    }
+    std::cout << '\n';
+  }
+
+}
+
 //int main(void) {
 //  Eigen::Affine3d transform;
 //  transform.setIdentity();
@@ -254,14 +269,15 @@ int main(void) {
 	using bezier::k3d;
 	//TestMatrix();
 	//TestFirstDerivative();
-	TestDegreeElevation();
+	//TestDegreeElevation();
+  GnuPlotPoints();
 
 	//Eigen::Vector3d controlPoint;
 	//std::vector<Eigen::Vector3d> controlPoints;
 	//while (std::cin >> controlPoint.x() >> controlPoint.y() >> controlPoint.z()) {
 	//	controlPoints.push_back(controlPoint);
 	//}
-	//std::vector<double> coefficients = bezier::CalculateCoefficients<double, k3d, kCubic>(controlPoints);
+	//std::vector<double> coefficients = bezier::GetCoefficients<double, k3d, kCubic>(controlPoints);
 	//for (auto i : coefficients) {
 	//	std::cout << i << '\n';
 	//}
@@ -271,7 +287,7 @@ int main(void) {
 	//while (std::cin >> controlPoint.x() >> controlPoint.y()) {
 	//	controlPoints.push_back(controlPoint);
 	//}
-	//std::vector<double> coefficients = bezier::CalculateCoefficients<double, k2d, kQuadratic>(controlPoints, 1);
+	//std::vector<double> coefficients = bezier::GetCoefficients<double, k2d, kQuadratic>(controlPoints, 1);
 	//for (auto i : coefficients) {
 	//	std::cout << i << '\n';
 	//}
@@ -288,12 +304,12 @@ int main(void) {
 	//}
 	//Eigen::Vector2d coordinate;
 	//for (auto i = 0; i < controlPoints.size() / 3; ++i) {
-	//	coordinate = bezier::CalculateCoordinate<double, k2d, kQuadratic>(controlPoints, i, .25);
+	//	coordinate = bezier::GetPosition<double, k2d, kQuadratic>(controlPoints, i, .25);
 	//	std::cout.precision(5);
 	//	std::cout << coordinate.transpose() << '\n';
-	//	coordinate = bezier::CalculateCoordinate<double, k2d, kQuadratic>(controlPoints, i, .5);
+	//	coordinate = bezier::GetPosition<double, k2d, kQuadratic>(controlPoints, i, .5);
 	//	std::cout << coordinate.transpose() << '\n';
-	//	coordinate = bezier::CalculateCoordinate<double, k2d, kQuadratic>(controlPoints, i, .75);
+	//	coordinate = bezier::GetPosition<double, k2d, kQuadratic>(controlPoints, i, .75);
 	//	std::cout << coordinate.transpose() << '\n';
 	//}
 
@@ -304,12 +320,12 @@ int main(void) {
 	//}
 	//Eigen::Vector3d coordinate;
 	//for (auto i = 0; i < controlPoints.size() / 4; ++i) {
-	//	coordinate = bezier::CalculateCoordinate<double, k3d, kCubic>(controlPoints, i, .25);
+	//	coordinate = bezier::GetPosition<double, k3d, kCubic>(controlPoints, i, .25);
 	//	std::cout.precision(5);
 	//	std::cout << coordinate.transpose() << '\n';
-	//	coordinate = bezier::CalculateCoordinate<double, k3d, kCubic>(controlPoints, i, .5);
+	//	coordinate = bezier::GetPosition<double, k3d, kCubic>(controlPoints, i, .5);
 	//	std::cout << coordinate.transpose() << '\n';
-	//	coordinate = bezier::CalculateCoordinate<double, k3d, kCubic>(controlPoints, i, .75);
+	//	coordinate = bezier::GetPosition<double, k3d, kCubic>(controlPoints, i, .75);
 	//	std::cout << coordinate.transpose() << '\n';
 	//}
 
@@ -335,13 +351,13 @@ int main(void) {
 	//Eigen::Vector3d normal;
 	//std::cout << std::fixed << std::setprecision(14);
 	//for (auto i = 0; i < control_points.size() / 4; ++i) {
-	//	coordinate = bezier::CalculateCoordinate<double, bezier::k3d, 3>(control_points, i, .5);
+	//	coordinate = bezier::GetPosition<double, bezier::k3d, 3>(control_points, i, .5);
 	//	std::cout << coordinate.transpose() << '\n';
-	//	tangent = bezier::CalculateFirstDerivative<double, bezier::k3d, 3>(control_points, i, .5);
+	//	tangent = bezier::GetFirstDerivative<double, bezier::k3d, 3>(control_points, i, .5);
 	//	tangent.normalize();
 	//	tangent += coordinate;
 	//	std::cout << tangent.transpose() << '\n';
-	//	normal = bezier::CalculateNormal<double, bezier::k3d, 3>(control_points, i, .5);
+	//	normal = bezier::GetNormal<double, bezier::k3d, 3>(control_points, i, .5);
 	//	normal.normalize();
 	//	normal += coordinate;
 	//	std::cout << normal.transpose() << '\n';
