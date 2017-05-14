@@ -74,6 +74,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>D:\eigen-3.3.3;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -81,7 +82,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\eigen-3.3.3;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
@@ -95,6 +96,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>D:\eigen-3.3.3;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -108,6 +110,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>D:\eigen-3.3.3;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -125,23 +128,10 @@
     <None Include="data\ctrl.dat" />
     <None Include="data\plot.gp" />
     <None Include="data\spline.dat" />
-    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="notes.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
-  <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\gsl-msvc14-x64.2.3.0.2779\build\native\gsl-msvc14-x64.targets" Condition="Exists('..\packages\gsl-msvc14-x64.2.3.0.2779\build\native\gsl-msvc14-x64.targets')" />
-    <Import Project="..\packages\gsl-msvc14-x86.2.3.0.2779\build\native\gsl-msvc14-x86.targets" Condition="Exists('..\packages\gsl-msvc14-x86.2.3.0.2779\build\native\gsl-msvc14-x86.targets')" />
-    <Import Project="..\packages\Eigen.3.3.3\build\native\Eigen.targets" Condition="Exists('..\packages\Eigen.3.3.3\build\native\Eigen.targets')" />
-  </ImportGroup>
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\packages\gsl-msvc14-x64.2.3.0.2779\build\native\gsl-msvc14-x64.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\gsl-msvc14-x64.2.3.0.2779\build\native\gsl-msvc14-x64.targets'))" />
-    <Error Condition="!Exists('..\packages\gsl-msvc14-x86.2.3.0.2779\build\native\gsl-msvc14-x86.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\gsl-msvc14-x86.2.3.0.2779\build\native\gsl-msvc14-x86.targets'))" />
-    <Error Condition="!Exists('..\packages\Eigen.3.3.3\build\native\Eigen.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Eigen.3.3.3\build\native\Eigen.targets'))" />
-  </Target>
+  <ImportGroup Label="ExtensionTargets" />
 </Project>

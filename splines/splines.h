@@ -75,11 +75,13 @@ template <typename RealScalar, typename Point>
 std::vector<RealScalar> GetCoefficients(const std::vector<Point>& points, 
 	const size_t segment_id, const size_t degree, const size_t dimension) {
 	const size_t order = degree + 1;
-	std::vector<RealScalar> coefficients;
+
+  std::vector<RealScalar> coefficients;
 	if (!IsSegmentDataValid(points, order, segment_id)) {
 		return coefficients;
 	}
-	// Create and fill Eigen::Matrix with control points for specified segment
+	
+  // Create and fill Eigen::Matrix with control points for specified segment
 	const size_t segment_index = segment_id * order;
 	Eigen::Matrix<RealScalar, Dynamic, Dynamic> control_points(order, dimension);
 	for (size_t i = segment_index, p = 0; i < segment_index + order; ++i, ++p) {
@@ -87,14 +89,17 @@ std::vector<RealScalar> GetCoefficients(const std::vector<Point>& points,
 			control_points(p, j) = points[i][j];
 		}
 	}
-	// Create and fill the coefficients of the power basis matrix
+	
+  // Create and fill the coefficients of the power basis matrix
 	Eigen::Matrix<RealScalar, Dynamic, Dynamic> basis(order, order);
 	basis << GetPowerCoefficients<RealScalar>(degree);
 	basis.colwise().reverseInPlace();
-	// Calculate the coefficients
+	
+  // Calculate the coefficients
 	Eigen::Matrix<RealScalar, Dynamic, Dynamic> result(order, dimension);
 	result = basis * control_points;
-	// Add coefficients to std::vector
+	
+  // Add coefficients to std::vector
 	size_t row_count = static_cast<size_t>(result.rows());
 	size_t col_count = static_cast<size_t>(result.cols());
 	for (size_t p = 0; p < row_count; ++p) {
@@ -102,7 +107,8 @@ std::vector<RealScalar> GetCoefficients(const std::vector<Point>& points,
 			coefficients.push_back(result(p, q));
 		}
 	}
-	return coefficients;
+	
+  return coefficients;
 }
 
 /**	
@@ -126,12 +132,14 @@ template <typename RealScalar, typename Point>
 Point GetPosition(const std::vector<Point>& points, const RealScalar t, 
 	const size_t segment_id, const size_t degree, const size_t dimension){
 	const size_t order = degree + 1;
-	Point coordinate;
+	
+  Point coordinate;
 	coordinate[0] = std::numeric_limits<RealScalar>::quiet_NaN();
 	if (!IsSegmentDataValid(points, order, segment_id)) {
 		return coordinate;
 	}
-	// Create and fill Eigen::Matrix with control points for specified segment
+	
+  // Create and fill Eigen::Matrix with control points for specified segment
 	const size_t segment_index = segment_id * order;
 	Eigen::Matrix<RealScalar, Dynamic, Dynamic> control_points(order, dimension);
 	for (size_t i = segment_index, p = 0; i < segment_index + order; ++i, ++p) {
@@ -139,21 +147,25 @@ Point GetPosition(const std::vector<Point>& points, const RealScalar t,
 			control_points(p, j) = points[i][j];
 		}
 	}
-	// Create and fill the power basis (t) matrix
+	
+  // Create and fill the power basis (t) matrix
 	Eigen::Matrix<RealScalar, 1, Dynamic> parameter(1, order);
 	for (size_t i = 0; i < order; ++i) {
 		parameter(0, i) = std::pow(t, i);
 	}
-	// Create and fill the coefficients of the power basis matrix
+	
+  // Create and fill the coefficients of the power basis matrix
 	Eigen::Matrix<RealScalar, Dynamic, Dynamic> basis(order, order);
 	basis << GetPowerCoefficients<RealScalar>(degree);
-	// Calculate the coordinate
+	
+  // Calculate the coordinate
 	Eigen::Matrix<RealScalar, Dynamic, 1> result;
 	result = parameter * basis * control_points;
 	for (size_t i = 0; i < dimension; ++i) {
 		coordinate[i] = result(i, 0);
 	}
-	return coordinate;
+	
+  return coordinate;
 }
 
 /**
@@ -178,36 +190,43 @@ template <typename RealScalar, typename Point>
 Point GetFirstDerivative(const std::vector<Point>& points, const RealScalar t,
 	const size_t segment_id, const size_t degree, const size_t dimension) {
 	const size_t order = degree + 1;
-	Point tangent;
+	
+  Point tangent;
 	tangent[0] = std::numeric_limits<RealScalar>::quiet_NaN();
 	if (!IsSegmentDataValid(points, order, segment_id)) {
 		return tangent;
 	}
-	// Get coeffecients of specified segment
+	
+  // Get coeffecients of specified segment
 	std::vector<RealScalar> coefficients;
 	coefficients = GetCoefficients<RealScalar>(points, segment_id, degree, dimension);
-	// Create and fill Eigen matrix with coefficients
+	
+  // Create and fill Eigen matrix with coefficients
 	Eigen::Matrix<RealScalar, Dynamic, Dynamic> C(degree, dimension);
 	for (size_t i = 0, p = 0; p < degree; i += dimension, ++p) {
 		for (size_t q = 0; q < dimension; ++q) {
 			C(p, q) = coefficients[i + q];
 		}
 	}
-	// Create and fill the power basis matrix
+	
+  // Create and fill the power basis matrix
 	Eigen::Matrix<RealScalar, 1, Dynamic> parameter(1, degree);
 	for (size_t i = 0; i < degree; ++i) {
 		parameter(0, i) = std::pow(t, i);
 	}
-	// Create and fill the coefficients of the power basis matrix
+	
+  // Create and fill the coefficients of the power basis matrix
 	Eigen::Matrix<RealScalar, Dynamic, Dynamic> basis(degree, degree);
 	basis << GetTangentCoefficients<RealScalar>(degree);
-	// Calculate first derivative (tangent)
+	
+  // Calculate first derivative (tangent)
 	Eigen::Matrix<RealScalar, Dynamic, 1> result;
 	result = parameter * basis * C;
 	for (size_t i = 0; i < dimension; ++i) {
 		tangent[i] = result(i, 0);
 	}
-	return tangent;
+	
+  return tangent;
 }
 
 /**
@@ -233,36 +252,43 @@ Point GetSecondDerivative(const std::vector<Point>& points, const RealScalar t,
 	const size_t segment_id, const size_t degree, const size_t dimension) {
 	const size_t order = degree + 1;
 	const size_t matrix_size = degree - 1;
-	Point curvature;
+	
+  Point curvature;
 	curvature[0] = std::numeric_limits<RealScalar>::quiet_NaN();
 	if (!IsSegmentDataValid(points, order, segment_id)) {
 		return curvature;
 	}
-	// Get coeffecients of specified segment
+	
+  // Get coeffecients of specified segment
 	std::vector<RealScalar> coefficients;
 	coefficients = GetCoefficients<RealScalar>(points, segment_id, degree, dimension);
-	// Create and fill Eigen matrix with coefficients
+	
+  // Create and fill Eigen matrix with coefficients
 	Eigen::Matrix<RealScalar, Dynamic, Dynamic> C(degree, dimension);
 	for (size_t i = 0, p = 0; p < degree; i += dimension, ++p) {
 		for (size_t q = 0; q < dimension; ++q) {
 			C(p, q) = coefficients[i + q];
 		}
 	}
-	// Create and fill the power basis matrix
+	
+  // Create and fill the power basis matrix
 	Eigen::Matrix<RealScalar, 1, Dynamic> parameter(1, matrix_size);
 	for (size_t i = 0; i < matrix_size; ++i) {
 		parameter(0, i) = std::pow(t, i);
 	}
-	// Create and fill the coefficients of the power basis matrix
+	
+  // Create and fill the coefficients of the power basis matrix
 	Eigen::Matrix<RealScalar, Dynamic, Dynamic> basis(matrix_size, matrix_size);
 	basis << GetSecondDerivativeCoefficients<RealScalar>(degree);
-	// Calculate the second derivative (curvature)
+	
+  // Calculate the second derivative (curvature)
 	Eigen::Matrix<RealScalar, Dynamic, 1> result;
 	result = parameter * basis * C.topRows(matrix_size);
 	for (size_t i = 0; i < dimension; ++i) {
 		curvature[i] = result(i, 0);
 	}
-	return curvature;
+	
+  return curvature;
 }
 
 /**
@@ -286,11 +312,13 @@ template <typename RealScalar, typename Point>
 Point GetNormal(const std::vector<Point>& points, const RealScalar t,
 	const size_t segment_id, const size_t degree, const size_t dimension) {
 	const size_t order = degree + 1;
-	Point normal;
+	
+  Point normal;
 	normal[0] = std::numeric_limits<RealScalar>::quiet_NaN();
 	if (!IsSegmentDataValid(points, order, segment_id)) {
 		return normal;
 	}
+
   switch (dimension) {
   case k2d:
     normal = Get2dNormal(points, t, segment_id, degree);
@@ -298,47 +326,6 @@ Point GetNormal(const std::vector<Point>& points, const RealScalar t,
   case k3d:
     normal = Get3dNormal(points, t, segment_id, degree);
   }
-	//// Get coordinate and tangent of curve at specified t parameter
-	//Point coord_1 = GetPosition<RealScalar>(points, t, segment_id, degree, dimension);
- // Point tan_1 = GetFirstDerivative<RealScalar>(points, t, segment_id, degree, dimension);
- // 
- // RealScalar next_t = t - .0001;
- // Point coord_2 = GetPosition<RealScalar>(points, next_t, segment_id, degree, dimension);
-	//Point tan_2 = GetFirstDerivative<RealScalar>(points, next_t, segment_id, degree, dimension);
-	//// Copy to Eigen matrices
-	//Eigen::Matrix<RealScalar, 3, 1> tangent = Eigen::Matrix<RealScalar, 3, 1>::Zero();
-	//Eigen::Matrix<RealScalar, 3, 1> next_tangent = Eigen::Matrix<RealScalar, 3, 1>::Zero();
-	//Eigen::Matrix<RealScalar, 3, 1> coordinate = Eigen::Matrix<RealScalar, 3, 1>::Zero();
-	//Eigen::Matrix<RealScalar, 3, 1> next_coordinate = Eigen::Matrix<RealScalar, 3, 1>::Zero();
-	//for (size_t i = 0; i < dimension; ++i) {
-	//	tangent(i, 0) = tan_1[i];
-	//	next_tangent(i, 0) = tan_2[i];
-	//	coordinate(i, 0) = coord_1[i];
-	//	next_coordinate(i, 0) = coord_2[i];
-	//}
-
-	//Eigen::Matrix<RealScalar, 3, 1> offset;
-	//offset = coordinate - next_coordinate;
-	//next_tangent += offset;
-	//tangent.normalize();
-	//next_tangent.normalize();
-	//Eigen::Matrix<RealScalar, 3, 1> z_axis;
-	//z_axis = tangent.cross(next_tangent);
-	//z_axis.normalize();
-	//
-	//// Create rotation matrix
-	////Eigen::Matrix<RealScalar, Dynamic, Dynamic> transform;
-	//Eigen::Transform<RealScalar, 3, Eigen::Affine> transform;
-	////transform.resize(dimension + 1, dimension + 1);
-	//transform.setIdentity();
-	//Eigen::AngleAxis<RealScalar> rotation(M_PI_2, z_axis);
-	//transform.rotate(rotation);
-	//Eigen::Matrix<RealScalar, 3, 1> result;
-	//result = transform * tangent;
-	//result.normalize();
-	//for (size_t i = 0; i < dimension; ++i) {
-	//	normal[i] = result(i, 0);
-	//}
 
 	return normal;
 }
@@ -364,18 +351,22 @@ Point Get3dNormal(const std::vector<Point>& points, const RealScalar t,
   const size_t segment_id, const size_t degree) {
   const size_t dimension = bezier::k3d;
   const size_t order = degree + 1;
+
   Point normal;
   normal[0] = std::numeric_limits<RealScalar>::quiet_NaN();
   if (!IsSegmentDataValid(points, order, segment_id)) {
     return normal;
   }
+
   // Get coordinate and tangent of curve at specified t parameter
   Point coord_1 = GetPosition<RealScalar>(points, t, segment_id, degree, dimension);
   Point tan_1 = GetFirstDerivative<RealScalar>(points, t, segment_id, degree, dimension);
-
+  
+  // Get coordinate and tangent close to t parameter
   RealScalar next_t = t - .0001;
   Point coord_2 = GetPosition<RealScalar>(points, next_t, segment_id, degree, dimension);
   Point tan_2 = GetFirstDerivative<RealScalar>(points, next_t, segment_id, degree, dimension);
+  
   // Copy to Eigen matrices
   Eigen::Matrix<RealScalar, 3, 1> tangent = Eigen::Matrix<RealScalar, 3, 1>::Zero();
   Eigen::Matrix<RealScalar, 3, 1> next_tangent = Eigen::Matrix<RealScalar, 3, 1>::Zero();
@@ -388,6 +379,7 @@ Point Get3dNormal(const std::vector<Point>& points, const RealScalar t,
     next_coordinate(i, 0) = coord_2[i];
   }
 
+  // Calculate rotation axis
   Eigen::Matrix<RealScalar, 3, 1> offset;
   offset = coordinate - next_coordinate;
   next_tangent += offset;
@@ -397,7 +389,7 @@ Point Get3dNormal(const std::vector<Point>& points, const RealScalar t,
   z_axis = tangent.cross(next_tangent);
   z_axis.normalize();
 
-  // Create rotation matrix
+  // Create rotation matrix and rotate tangent vector
   Eigen::Transform<RealScalar, 3, Eigen::Affine> transform;
   transform.setIdentity();
   Eigen::AngleAxis<RealScalar> rotation(M_PI_2, z_axis);
@@ -433,11 +425,13 @@ Point Get2dNormal(const std::vector<Point>& points, const RealScalar t,
   const size_t segment_id, const size_t degree) {
   const size_t dimension = bezier::k2d;
   const size_t order = degree + 1;
+
   Point normal;
   normal[0] = std::numeric_limits<RealScalar>::quiet_NaN();
   if (!IsSegmentDataValid(points, order, segment_id)) {
     return normal;
   }
+
   // Get coordinate and tangent of curve at specified t parameter
   Point coord_1 = GetPosition<RealScalar>(points, t, segment_id, degree, dimension);
   Point tan_1 = GetFirstDerivative<RealScalar>(points, t, segment_id, degree, dimension);
@@ -451,6 +445,7 @@ Point Get2dNormal(const std::vector<Point>& points, const RealScalar t,
   }
   tangent.normalize();
 
+  // Rotate tangent vector
   Eigen::Matrix<RealScalar, 2, 1> result = Eigen::Rotation2D<RealScalar>::Rotation2D(M_PI_2) * tangent;
   result.normalize();
   for (size_t i = 0; i < dimension; ++i) {
@@ -464,27 +459,29 @@ Point Get2dNormal(const std::vector<Point>& points, const RealScalar t,
 @brief	Divide a Bézier curve segment into 2 smaller segments.
 
 This function divides a Bézier curve segment at parameter \f$t\f$ and returns 2 sets of control
-points representing the subdivided segments.
+points representing the divided segments.
 
 @tparam RealScalar Type of data being passed in. Valid types are float and double.
 @tparam Point Container type for the points. Must have [] accessor. [0] = x, [1] = y and if 3d, [2] = z.
 @param	points Control points of a composite Bézier. Number of control points for each segment
-		should be \f$degree + 1\f$
+		    should be \f$degree + 1\f$
 @param	t Parameter in the range \f$0 \le t \le 1\f$ which indicates the position to split the curve segment.
 @param	segment_id Indicates which segment of the composite Bézier curve to process. Numbering
-		starts at 0.
+		    starts at 0.
 @param	degree Degree of the Bézier curve.
 @param	dimension Dimension of control point coordinates. Valid options are bezier::k2d or bezier::k3d
-@return	Coordinate of type *Point* for the calculated tangent vector.
+@return	Two sets of control points representing the divided segments.
 */
 template <typename RealScalar, typename Point>
 std::vector<Point> SplitSegment(const std::vector<Point>& points, const RealScalar t,
 	const size_t segment_id, size_t degree, size_t dimension) {
 	const size_t order = degree + 1;
-	std::vector<Point> split_segments;
+	
+  std::vector<Point> split_segments;
 	if (!IsSegmentDataValid(points, order, segment_id)) {
 		return split_segments;
 	}
+
 	// Create and fill Eigen::Matrix with control points for specified segment
 	const size_t segment_index = segment_id * order;
 	Eigen::Matrix<RealScalar, Dynamic, Dynamic> P;
@@ -494,7 +491,8 @@ std::vector<Point> SplitSegment(const std::vector<Point>& points, const RealScal
 			P(p, j) = points[i][j];
 		}
 	}
-	// Create and fill the power basis matrices
+	
+  // Create and fill the power basis matrices
 	Eigen::Matrix<RealScalar, 1, Dynamic> Z;
 	Z.resize(Eigen::NoChange, order);
 	for (size_t i = 0; i < order; ++i) {
@@ -532,9 +530,21 @@ std::vector<Point> SplitSegment(const std::vector<Point>& points, const RealScal
 		}
 		split_segments.push_back(point);
 	}
-	return split_segments;
+
+  return split_segments;
 }
 
+/**
+@brief	Elevate degree of a composite Bézier curve by one.
+
+@tparam RealScalar Type of data being passed in. Valid types are float and double.
+@tparam	dimension Dimension of control point coordinates. Valid options are bezier::k2d or bezier::k3d
+@tparam	degree Degree of the inputed composite Bézier curve.
+@tparam Point Container type for the points. Must have [] accessor. [0] = x, [1] = y and if 3d, [2] = z.
+@param	points Control points of a composite Bézier. Number of control points for each segment
+        should be \f$degree + 1\f$
+@return	Control points of the elevated composite curve.
+*/
 template <typename RealScalar, Dimension dimension, size_t degree, typename Point>
 std::vector<Point> ElevateDegree(const std::vector<Point>& points) {
 	const size_t order = degree + 1;
@@ -574,7 +584,8 @@ std::vector<Point> ElevateDegree(const std::vector<Point>& points) {
 		}
 		elevated_points.push_back(point);
 	}
-	return elevated_points;
+	
+  return elevated_points;
 }
 
 }	// end namespace bezier

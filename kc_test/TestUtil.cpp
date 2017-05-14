@@ -7,6 +7,7 @@
 #include <fstream>
 #include <vector>
 #include <iomanip>
+#include <complex>
 
 CKSEntity SplineSelect(CKPart& part) {
     CKSEntity entity;
@@ -60,6 +61,14 @@ void WriteControlPoints(const std::string& dataFile, const std::vector<CKSCoord>
 }
 
 void WriteCoefficients(const std::string& dataFile, const std::vector<double>& points) {
+  std::ofstream data(dataFile);
+  if (!data.is_open()) return;
+  data << std::setprecision(15);
+  for (auto coeff : points) {
+    data << coeff << '\n';
+  }
+}
+void WriteCoefficients(const std::string& dataFile, const std::vector<std::complex<double>>& points) {
   std::ofstream data(dataFile);
   if (!data.is_open()) return;
   data << std::setprecision(15);

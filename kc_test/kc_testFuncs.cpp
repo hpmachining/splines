@@ -28,14 +28,14 @@ int TestSplineLibrary() {
 	if (!part.IsValid()) {
 		return CK_NO_PART;
 	}
-	CKSCoordArray control_points;   // Holds the 4 control points for entire segment
-  //CKSEntity spline = SplineSelect(part);
-  CKSEntityArray curves = CurvesSelect(part);
+	std::vector<CKSCoord> control_points;   // Holds the 4 control points for entire segment
   std::vector <double> coeffs;
   CKSMatrix worldMat;
+  CKSEntityArray curves = CurvesSelect(part);
   status = GetCoeffFromCurves(part, curves, coeffs, .0000001);
   CKSEntity spline = part.AddSpline(true, false, coeffs, NULL, &worldMat);
-	if (!spline.IsValid()) {
+  //CKSEntity spline = SplineSelect(part);
+  if (!spline.IsValid()) {
 		MessageBox(nullptr, _T("Error with spline selection"), _T("Spline Data"), MB_OK_STOP);
 		status = CKError;
 	}
@@ -97,18 +97,18 @@ int TestSplineLibrary() {
 		//part.AddPoint(old_tangent);
 		//part.NoteState();
 
-		// Test 2D spline points
-		CKSCoord2D cp_2d;
-		std::vector<CKSCoord2D> points_2d;
-		for (auto i : control_points) {
-			cp_2d.m_dX = i.m_dX;
-			cp_2d.m_dY = i.m_dY;
-			points_2d.push_back(cp_2d);
-		}
+		//// Test 2D spline points
+		//CKSCoord2D cp_2d;
+		//std::vector<CKSCoord2D> points_2d;
+		//for (auto i : control_points) {
+		//	cp_2d.m_dX = i.m_dX;
+		//	cp_2d.m_dY = i.m_dY;
+		//	points_2d.push_back(cp_2d);
+		//}
 		const size_t degree = 3;
 
 		//// Test elevate degree 2d. Works
-		//std::vector<CKSCoord2D> elevated_points = bezier::ElevateDegree<double, bezier::Dimension::k2d, degree>(points_2d);
+		//std::vector<CKSCoord2D> elevated_points = bezier::ElevateDegree<double>(points_2d, bezier::Dimension::k2d, degree);
 		//for (auto i: elevated_points) {
 		//	part.AddPoint(i.m_dX, i.m_dY, 0.0);
 		//}
@@ -132,34 +132,34 @@ int TestSplineLibrary() {
 		//}
 		//part.NoteState();
 
-		// Test tangent and normal functions 2d. Works
-		CKSCoord2D coordinate;
-		CKSCoord2D tangent;
-		CKSCoord2D normal;
-		for (size_t i = 0; i < points_2d.size() / 4; ++i) {
-      for (size_t j = 0; j < 4; ++j) {
-        double t = j / 4.0;
-        coordinate = bezier::GetPosition<double>(points_2d, t, i, degree, bezier::k2d);
-        part.AddPoint(coordinate.m_dX, coordinate.m_dY, 0.0);
-        tangent = bezier::GetFirstDerivative<double>(points_2d, t, i, degree, bezier::k2d);
-        normal = bezier::GetNormal<double>(points_2d, t, i, degree, bezier::k2d);
-        CKSMatrix temp;
-        CKSCoord v1(coordinate.m_dX, coordinate.m_dY, 0.0);
-        CKSCoord v2(tangent.m_dX, tangent.m_dY, 0.0);
-        CKSCoord v3(normal.m_dX, normal.m_dY, 0.0);
-        CKSMath::MatrixVector(v1, v1 + v2, temp);
-        CKEntityAttrib attrib;
-        attrib.m_ucColorNumber = 7;
-        part.AddVector(.25, &temp, &attrib);
-        attrib.m_ucColorNumber = 10;
-        CKSMath::MatrixVector(v1, v1 + v3, temp);
-        part.AddVector(.25, &temp, &attrib);
-      }
-		}
-		part.NoteState();
+		//// Test tangent and normal functions 2d. Works
+		//CKSCoord2D coordinate;
+		//CKSCoord2D tangent;
+		//CKSCoord2D normal;
+		//for (size_t i = 0; i < points_2d.size() / 4; ++i) {
+  //    for (size_t j = 0; j < 4; ++j) {
+  //      double t = j / 4.0;
+  //      coordinate = bezier::GetPosition<double>(points_2d, t, i, degree, bezier::k2d);
+  //      part.AddPoint(coordinate.m_dX, coordinate.m_dY, 0.0);
+  //      tangent = bezier::GetFirstDerivative<double>(points_2d, t, i, degree, bezier::k2d);
+  //      normal = bezier::GetNormal<double>(points_2d, t, i, degree, bezier::k2d);
+  //      CKSMatrix temp;
+  //      CKSCoord v1(coordinate.m_dX, coordinate.m_dY, 0.0);
+  //      CKSCoord v2(tangent.m_dX, tangent.m_dY, 0.0);
+  //      CKSCoord v3(normal.m_dX, normal.m_dY, 0.0);
+  //      CKSMath::MatrixVector(v1, v1 + v2, temp);
+  //      CKEntityAttrib attrib;
+  //      attrib.m_ucColorNumber = 7;
+  //      part.AddVector(.25, &temp, &attrib);
+  //      attrib.m_ucColorNumber = 10;
+  //      CKSMath::MatrixVector(v1, v1 + v3, temp);
+  //      part.AddVector(.25, &temp, &attrib);
+  //    }
+		//}
+		//part.NoteState();
 
 		//// Test elevate degree 3d. Works
-		//CKSCoordArray elevated_points = bezier::ElevateDegree<double, bezier::Dimension::k3d, 3>(control_points);
+		//CKSCoordArray elevated_points = bezier::ElevateDegree<double>(control_points, bezier::Dimension::k3d, 3);
 		//for (size_t i = 0; i < elevated_points.size(); ++i) {
 		//	part.AddPoint(elevated_points[i]);
 		//}
@@ -216,23 +216,44 @@ int TestSplineLibrary() {
     //part.DeleteEntity(spline);
     //part.NoteState();
 
+    coeffs.clear();
+    coeffs = bezier::GetCoefficients<double>(control_points);
+    coeffs = bezier::ConvertCoefficientLayoutToKC(coeffs, 3, 3);
     size_t coeffs_size = coeffs.size();
-    size_t coeff_segment_size = (degree + 1) * 3;
+    size_t control_point_set = degree + 1;
+    size_t segment_size = control_point_set * 3;
+    size_t segment_count = coeffs_size / segment_size;
     std::vector<double> quad_coeffs(3);
+    std::vector<double> linear_coeffs(2);
     std::vector<double> t_values;
-    for (size_t i = 0; i < coeffs_size; i += 4) {
+    for (size_t i = 0; i < segment_count; ++i) {
       for (size_t j = 0; j < 3; ++j) {
-        quad_coeffs[j] = coeffs[i + j] * (3 - j);
+        for (size_t k = 0; k < 3; ++k) {
+          quad_coeffs[k] = coeffs[(i * segment_size) + (j * 4) + k] * (3 - k);
+          if (k < 2) {
+            linear_coeffs[k] = quad_coeffs[k] * (2 - k);
+          }
+        }
+        bezier::SolveQuadratic(quad_coeffs, t_values);
+        t_values.push_back(bezier::SolveLinear(linear_coeffs));
       }
-      status = bezier::SolveQuadratic(quad_coeffs, t_values);
     }
-    auto t_end = std::remove_if(t_values.begin(), t_values.end(), [](double a) {
-      return (a <= 0.0 || a >= 1.0);
-    });
-    t_values.erase(t_end, t_values.end());
+    //auto t_end = std::remove_if(t_values.begin(), t_values.end(), [](double a) {
+    //  return (a <= 0.0 || a >= 1.0);
+    //});
+    //t_values.erase(t_end, t_values.end());
+    t_values.push_back(0.0);
+    t_values.push_back(1.0);
+    for (auto it : t_values) {
+      if (it >= 0.0 && it <= 1.0) {
+        CKSCoord position = bezier::GetPosition(control_points, it);
+        part.AddPoint(position);
+      }
+    }
+    part.NoteState();
     WriteData("nodes.dat", nodePoints);
 		WriteCoefficients("coeff.dat", coeffs);
-    WriteCoefficients("quadratic_solutions.dat", t_values);
+    WriteCoefficients("derivatives.dat", t_values);
 		WriteControlPoints("ctrl.dat", control_points);
 		CKSCoordArray fitPoints;
 		SplineToPoints(part, spline, fitPoints);

@@ -29,7 +29,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
     <None Include="data\ctrl.dat">
       <Filter>Data</Filter>
     </None>

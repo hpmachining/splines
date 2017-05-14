@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ck_sdk.h"
+#include <complex>
 
 #define MB_TITLE (_T("Hello!"))
 #define MB_OK_STOP (MB_OK | MB_ICONSTOP)
@@ -14,3 +15,4 @@ CKSEntityArray CurvesSelect(CKPart& part);
 void WriteData(const std::string& dataFile, const std::vector<CKSCoord>& points);
 void WriteControlPoints(const std::string& dataFile, const std::vector<CKSCoord>& points);
 void WriteCoefficients(const std::string& dataFile, const std::vector<double>& points);
+void WriteCoefficients(const std::string& dataFile, const std::vector<std::complex<double>>& points);

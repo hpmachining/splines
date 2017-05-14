@@ -3,6 +3,7 @@
 #include <vector>
 #include <iostream>
 #include <limits>
+#include <complex>
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
 
@@ -39,6 +40,9 @@ std::vector<RealScalar> ConvertCoefficientLayoutToKC(const std::vector<RealScala
 
 template<typename RealScalar>
 int SolveQuadratic(const std::vector<RealScalar>& coefficients, std::vector<RealScalar>& solutions);
+
+template<typename RealScalar>
+RealScalar SolveLinear(const std::vector<RealScalar>& coefficients);
 
 template <typename Point>
 bool IsSegmentDataValid(const std::vector<Point>& points, const size_t order, const size_t segment_id) {
@@ -87,7 +91,7 @@ Eigen::Matrix<RealScalar, Dynamic, Dynamic> GetPowerCoefficients(const size_t de
 			coefficients(i + j, j) = element;
 		}
 	}
-	return coefficients;
+  return coefficients;
 }
 
 template<typename RealScalar>
@@ -99,7 +103,7 @@ Eigen::DiagonalMatrix<RealScalar, Dynamic> GetBinomialCoefficients(const size_t 
 	for (size_t i = 0; i < degree; ++i) {
 		coefficients.diagonal()[i + 1] = coefficients.diagonal()[i] * (degree - i) / (i + 1);
 	}
-	return coefficients;
+  return coefficients;
 }
 
 template<typename RealScalar>
@@ -125,28 +129,31 @@ std::vector<RealScalar> ConvertCoefficientLayoutToKC(const std::vector<RealScala
 			}
 		}
 	}
-	return sorted;
+  return sorted;
 }
 
 template<typename RealScalar>
-int SolveQuadratic(const std::vector<RealScalar>& coefficients, std::vector<RealScalar>& solutions) { 
+int SolveQuadratic(const std::vector<RealScalar>& coefficients, std::vector<RealScalar>& solutions) {
   if (coefficients.size() != 3) {
     return 1;
   }
   RealScalar a = coefficients[0];
   RealScalar b = coefficients[1];
   RealScalar c = coefficients[2];
-  RealScalar t;
-
-  t = (-b + std::sqrt(b * b - 4 * a * c)) / (2 * a);
-  //if (!std::isnan(t)) {
-    solutions.push_back(t);
-  //}
-  t = (-b - (std::sqrt(b * b - 4 * a * c))) / (2 * a);
-  //if (!std::isnan(t)) {
-    solutions.push_back(t);
-  //}
+  RealScalar square_root = std::sqrt(b * b - 4 * a * c);
+  RealScalar t = (-b + square_root) / (2 * a);
+  solutions.push_back(t);
+  t = (-b - square_root) / (2 * a);
+  solutions.push_back(t);
   return 0;
+}
+
+template<typename RealScalar>
+RealScalar SolveLinear(const std::vector<RealScalar>& coefficients) {
+  RealScalar a = coefficients[0];
+  RealScalar b = coefficients[1];
+  RealScalar t = -b / a;
+  return t;
 }
 
 } // end namespace bezier
