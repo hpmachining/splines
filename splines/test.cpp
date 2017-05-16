@@ -22,7 +22,7 @@ void WriteFile(const std::string& file, const Eigen::Matrix<RealScalar, rows, co
 void TestDegreeElevation() {
 	using Point = Eigen::Vector2d;
 	const size_t dimension = 2; // 2d or 3d points
-	const size_t degree = 2;
+	const size_t degree = 3;
 	const size_t order = degree + 1;
 
 	// Read control points from file
@@ -31,20 +31,39 @@ void TestDegreeElevation() {
 	while (std::cin >> point.x() >> point.y()) {// >> point.z()) {
 		points.push_back(point);
 	}
-
+  std::cout << std::setprecision(3) << std::fixed;
+  std::cout << "Original control points\n";
+  for (auto i : points) {
+    std::cout << i[0] << " " << i[1] << "\n";
+  }
+  std::vector<double> coefficients = bezier::GetCoefficients<double>(points, 0, 3, 2);
+  std::cout << "\nCoefficients\n";
+  for (auto i : coefficients) {
+    std::cout << i << '\n';
+  }
+  std::cout << "\nElevated control points\n";
 	std::vector<Point> elevated_points = bezier::ElevateDegree<double, bezier::k2d, degree>(points);
 	for (auto i : elevated_points) {
 		std::cout << i[0] << " " << i[1] << "\n";
 	}
-	for (auto i = 0.0; i <= 1.0; i += .25) {
-		Point coord = bezier::GetPosition<double>(elevated_points, i, 0, 3, dimension);
-		Point first = bezier::GetFirstDerivative<double>(elevated_points, i, 0, 3, dimension);
-		Point second = bezier::GetSecondDerivative<double>(elevated_points, i, 0, 3, dimension);
-		std::cout << "t = " << i << "\n";
-		std::cout << "Coordinate = x: " << coord.x() << " y: " << coord.y() << "\n";
-		std::cout << "first derivative = x: " << first.x() << " y: " << first.y() << "\n";
-		std::cout << "second derivative = x: " << second.x() << " y: " << second.y() << "\n\n";
-	}
+  std::vector<double> coeffs = bezier::GetCoefficients<double>(elevated_points, 0, degree + 1, bezier::k2d);
+  std::cout << "\nCoefficients\n";
+  for (auto i : coeffs) {
+    std::cout << i << '\n';
+  }
+
+  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> test_invert = bezier::GetPowerCoefficients<double>(6);
+  test_invert.colwise().reverseInPlace();
+  std::cout << "\nBinomial Coefficients degree 4\n" << test_invert.inverse();
+	//for (auto i = 0.0; i <= 1.0; i += .25) {
+	//	Point coord = bezier::GetPosition<double>(elevated_points, i, 0, 3, dimension);
+	//	Point first = bezier::GetFirstDerivative<double>(elevated_points, i, 0, 3, dimension);
+	//	Point second = bezier::GetSecondDerivative<double>(elevated_points, i, 0, 3, dimension);
+	//	std::cout << "t = " << i << "\n";
+	//	std::cout << "Coordinate = x: " << coord.x() << " y: " << coord.y() << "\n";
+	//	std::cout << "first derivative = x: " << first.x() << " y: " << first.y() << "\n";
+	//	std::cout << "second derivative = x: " << second.x() << " y: " << second.y() << "\n\n";
+	//}
 	//for (size_t i = 0; i < points.size() / order; ++i) {
 	//	const size_t segment_index = i * order;
 
@@ -269,8 +288,8 @@ int main(void) {
 	using bezier::k3d;
 	//TestMatrix();
 	//TestFirstDerivative();
-	//TestDegreeElevation();
-  GnuPlotPoints();
+	TestDegreeElevation();
+  //GnuPlotPoints();
 
 	//Eigen::Vector3d controlPoint;
 	//std::vector<Eigen::Vector3d> controlPoints;
