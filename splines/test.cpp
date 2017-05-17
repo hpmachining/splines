@@ -52,6 +52,14 @@ void TestDegreeElevation() {
     std::cout << i << '\n';
   }
 
+  coeffs = bezier::ConvertCoefficientLayoutToKC(coeffs, 4, 2);
+  std::vector<Point> cp_coeff = bezier::GetControlPoints<double, Point>(coeffs, 0, 4, 2);
+  std::cout << "\nControl points from elevated coefficients\n";
+  for (auto i : cp_coeff) {
+    std::cout << i[0] << " " << i[1] << "\n";
+  }
+
+
   Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> test_invert = bezier::GetPowerCoefficients<double>(6);
   test_invert.colwise().reverseInPlace();
   std::cout << "\nBinomial Coefficients degree 4\n" << test_invert.inverse();
