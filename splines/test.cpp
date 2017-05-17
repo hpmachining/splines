@@ -36,33 +36,35 @@ void TestDegreeElevation() {
   for (auto i : points) {
     std::cout << i[0] << " " << i[1] << "\n";
   }
-  std::vector<double> coefficients = bezier::GetCoefficients<double>(points, 0, 3, 2);
+  std::vector<double> all_coefficients = bezier::GetCoefficients<double>(points, 0, 3, 2);
+  std::vector<double> coefficients = bezier::GetCoefficients<double>(points, 1, 3, 2);
+  all_coefficients.insert(std::end(all_coefficients), std::begin(coefficients), std::end(coefficients));
+  all_coefficients = bezier::ConvertCoefficientLayoutToKC(all_coefficients, 3, 2);
   std::cout << "\nCoefficients\n";
-  for (auto i : coefficients) {
+  for (auto i : all_coefficients) {
     std::cout << i << '\n';
   }
-  std::cout << "\nElevated control points\n";
-	std::vector<Point> elevated_points = bezier::ElevateDegree<double, bezier::k2d, degree>(points);
-	for (auto i : elevated_points) {
-		std::cout << i[0] << " " << i[1] << "\n";
-	}
-  std::vector<double> coeffs = bezier::GetCoefficients<double>(elevated_points, 0, degree + 1, bezier::k2d);
-  std::cout << "\nCoefficients\n";
-  for (auto i : coeffs) {
-    std::cout << i << '\n';
-  }
+ // std::cout << "\nElevated control points\n";
+	//std::vector<Point> elevated_points = bezier::ElevateDegree<double, bezier::k2d, degree>(points);
+	//for (auto i : elevated_points) {
+	//	std::cout << i[0] << " " << i[1] << "\n";
+	//}
+ // std::vector<double> coeffs = bezier::GetCoefficients<double>(elevated_points, 1, degree + 1, bezier::k2d);
+ // std::cout << "\nCoefficients\n";
+ // for (auto i : coeffs) {
+ //   std::cout << i << '\n';
+ // }
 
-  coeffs = bezier::ConvertCoefficientLayoutToKC(coeffs, 4, 2);
-  std::vector<Point> cp_coeff = bezier::GetControlPoints<double, Point>(coeffs, 0, 4, 2);
-  std::cout << "\nControl points from elevated coefficients\n";
+  std::vector<Point> cp_coeff = bezier::GetControlPoints<double, Point>(all_coefficients, 1, 3, 2);
+  std::cout << "\nControl points from coefficients\n";
   for (auto i : cp_coeff) {
     std::cout << i[0] << " " << i[1] << "\n";
   }
 
 
-  Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> test_invert = bezier::GetPowerCoefficients<double>(6);
-  test_invert.colwise().reverseInPlace();
-  std::cout << "\nBinomial Coefficients degree 4\n" << test_invert.inverse();
+  //Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> test_invert = bezier::GetPowerCoefficients<double>(6);
+  //test_invert.colwise().reverseInPlace();
+  //std::cout << "\nBinomial Coefficients degree 4\n" << test_invert.inverse();
 	//for (auto i = 0.0; i <= 1.0; i += .25) {
 	//	Point coord = bezier::GetPosition<double>(elevated_points, i, 0, 3, dimension);
 	//	Point first = bezier::GetFirstDerivative<double>(elevated_points, i, 0, 3, dimension);

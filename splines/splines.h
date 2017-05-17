@@ -120,7 +120,8 @@ std::vector<RealScalar> GetCoefficients(const std::vector<Point>& points,
 
 This function takes a set of 2d or 3d coefficients and a segment number of a
 composite Bézier curve and returns the control points for that segment. Coefficient sets should be in
-multiples of \f$\left(degree + 1\right) * dimension\f$.
+multiples of \f$\left(degree + 1\right) * dimension\f$ and in the order 
+\f$A_x, B_x, C_x, D_x, A_y, B_y, C_y, D_y\f$ and if 3d \f$A_z, B_z, C_z, D_z\f$.
 
 @tparam RealScalar Type of data being passed in. Valid types are float and double.
 @tparam Point Container type for the  control points. Must have [] accessor. [0] = x, [1] = y, and if 3d, [2] = z.
@@ -128,10 +129,8 @@ multiples of \f$\left(degree + 1\right) * dimension\f$.
 @param	segment_id Indicates which segment of the composite Bézier curve to process. Numbering
 starts at 0.
 @param	degree Degree of the Bézier curve.
-@param	dimension Dimension of control point coordinates. Valid options are bezier::k2d or bezier::k3d
-@return	Coefficients calculated from the control points. Coefficients are stored in the order
-\f${C_{1_{x,y,(z)}},C_{2_{x,y,(z)}}, ..., C_{n_{x,y,(z)}}}\f$ where \f$n = degree + 1\f$.
-3d curves will have \f$n \cdot 3\f$ coefficients and 2d curves will have \f$n \cdot 2\f$.
+@param	dimension Dimension of coefficients. Valid options are bezier::k2d or bezier::k3d
+@return	Control points calculated from the coefficients.
 */
 template <typename RealScalar, typename Point>
 std::vector<Point> GetControlPoints(const std::vector<RealScalar>& coefficients,
@@ -147,15 +146,14 @@ std::vector<Point> GetControlPoints(const std::vector<RealScalar>& coefficients,
   }
   const size_t segment_index = segment_id * segment_size;
 
-  // Create and fill Eigen::Matrix with coefficients for specified segment
-  Eigen::Matrix<RealScalar, Dynamic, Dynamic> coefficient_matrix(order, dimension);
-  //const size_t last_index = segment_index + segment_size;
-  //for (size_t i = segment_index; i < last_index; ++i) {
-    for (size_t j = 0; j < dimension; ++j) {
-      for (size_t k = 0; k < order; ++k) {
-        coefficient_matrix(k, j) = coefficients[segment_index + (j * order) + k];
-      }
-    }
+  //const double* dp = coefficients.data() + segment_index;
+  Eigen::Map<const Eigen::Matrix<RealScalar, Dynamic, Dynamic>>
+    coeff_map(coefficients.data() + segment_index, order, dimension);
+  //Eigen::Matrix<RealScalar, Dynamic, Dynamic> coefficient_matrix(order, dimension);
+  //for (size_t j = 0; j < dimension; ++j) {
+  //  for (size_t k = 0; k < order; ++k) {
+  //    coefficient_matrix(k, j) = coefficients[segment_index + (j * order) + k];
+  //  }
   //}
 
   // Create and fill the coefficients of the power basis matrix
@@ -165,7 +163,7 @@ std::vector<Point> GetControlPoints(const std::vector<RealScalar>& coefficients,
 
   // Calculate the control points
   Eigen::Matrix<RealScalar, Dynamic, Dynamic> result(order, dimension);
-  result = basis_inverse * coefficient_matrix;
+  result = basis_inverse * coeff_map;
 
   // Add control points to std::vector
   size_t row_count = static_cast<size_t>(result.rows());
