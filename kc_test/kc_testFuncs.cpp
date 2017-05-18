@@ -127,7 +127,6 @@ int TestSplineLibrary() {
 		//// Create spline from calculated coefficients 2d
 		//for (size_t i = 0; i < 2; ++i) {
 		//	std::vector<double> new_coeff = bezier::GetCoefficients<double>(split_points, i, degree, bezier::k2d);
-		//	std::vector<double> kc_coeff = bezier::ConvertCoefficientLayoutToKC<double>(new_coeff, degree, bezier::k2d);
 		//	part.AddSpline(false, false, kc_coeff);
 		//}
 		//part.NoteState();
@@ -179,7 +178,6 @@ int TestSplineLibrary() {
 		// Create spline from calculated coefficients 3d. Works
 		//for (size_t i = 0; i < 2; ++i) {
 		//	std::vector<double> new_coeff = bezier::GetCoefficients<double>(split_points, i);
-		//	std::vector<double> kc_coeff = bezier::ConvertCoefficientLayoutToKC<double>(new_coeff, degree, bezier::k3d);
 		//	part.AddSpline(true, false, kc_coeff);
 		//}
 		//part.NoteState();
@@ -218,7 +216,6 @@ int TestSplineLibrary() {
 
     coeffs.clear();
     coeffs = bezier::GetCoefficients<double>(control_points);
-    coeffs = bezier::ConvertCoefficientLayoutToKC(coeffs, 3, 3);
     size_t coeffs_size = coeffs.size();
     size_t control_point_set = degree + 1;
     size_t segment_size = control_point_set * 3;

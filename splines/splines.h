@@ -65,15 +65,19 @@ std::vector<Point> ElevateDegree(const std::vector<Point>& points);
 		multiples of \f$degree + 1\f$.
 
 @tparam RealScalar Type of data being passed in. Valid types are float and double.
-@tparam Point Container type for the points. Must have [] accessor. [0] = x, [1] = y, and if 3d, [2] = z.
-@param	points Control points. Number of control points for each segment should be \f$degree + 1\f$
-@param	segment_id Indicates which segment of the composite Bézier curve to process. Numbering
-		starts at 0.
+@tparam Point Container type for the points. Must have [] accessor. 
+        [0] = x, [1] = y, and if 3d, [2] = z.
+@param	points Control points. Number of control points for each segment should be 
+        \f$degree + 1\f$
+@param	segment_id Indicates which segment of the composite Bézier curve to process. 
+        Numbering starts at 0.
 @param	degree Degree of the Bézier curve.
-@param	dimension Dimension of control point coordinates. Valid options are bezier::k2d or bezier::k3d
-@return	Coefficients calculated from the control points. Coefficients are stored in the order
-		\f${C_{1_{x,y,(z)}},C_{2_{x,y,(z)}}, ..., C_{n_{x,y,(z)}}}\f$ where \f$n = degree + 1\f$.
-		3d curves will have \f$n \cdot 3\f$ coefficients and 2d curves will have \f$n \cdot 2\f$.
+@param	dimension Dimension of control point coordinates. 
+        Valid options are bezier::k2d or bezier::k3d
+@return	Coefficients calculated from the control points. Order of stored coefficients is
+		    \f$\left[C_{1,1}, C_{2,1}, ..., C_{n,1};\; C_{1,2}, C_{2,2}, ..., 
+        C_{n,2};\; C_{1,m}, ..., C_{n,m}\right]\f$ where \f$n = degree + 1\f$ 
+        and \f$m = dimension\f$. Curves will have \f$n \cdot m\f$ coefficients.
 */
 template <typename RealScalar, typename Point>
 std::vector<RealScalar> GetCoefficients(const std::vector<Point>& points, 
@@ -102,13 +106,14 @@ std::vector<RealScalar> GetCoefficients(const std::vector<Point>& points,
   // Calculate the coefficients
 	Eigen::Matrix<RealScalar, Dynamic, Dynamic> result(order, dimension);
 	result = basis * control_points;
+  std::cout << "\nCoefficient matrix\n" << result << '\n';
 	
   // Add coefficients to std::vector
 	size_t row_count = static_cast<size_t>(result.rows());
 	size_t col_count = static_cast<size_t>(result.cols());
-	for (size_t p = 0; p < row_count; ++p) {
-		for (size_t q = 0; q < col_count; ++q) {
-			coefficients.push_back(result(p, q));
+	for (size_t p = 0; p < col_count; ++p) {
+		for (size_t q = 0; q < row_count; ++q) {
+			coefficients.push_back(result(q, p));
 		}
 	}
 	
@@ -119,15 +124,17 @@ std::vector<RealScalar> GetCoefficients(const std::vector<Point>& points,
 @brief	Calculate the control points derived from a segment of a composite Bézier curve.
 
 This function takes a set of 2d or 3d coefficients and a segment number of a
-composite Bézier curve and returns the control points for that segment. Coefficient sets should be in
-multiples of \f$\left(degree + 1\right) * dimension\f$ and in the order 
-\f$A_x, B_x, C_x, D_x, A_y, B_y, C_y, D_y\f$ and if 3d \f$A_z, B_z, C_z, D_z\f$.
+composite Bézier curve and returns the control points for that segment. 
+Coefficient sets should be in multiples of \f$\left(degree + 1\right) * dimension\f$ 
+and in the order \f$\left[C_{1,1}, C_{2,1}, ..., C_{n,1};\; C_{1,2}, C_{2,2}, ...,
+C_{n,2};\; C_{1,m}, ..., C_{n,m}\right]\f$ where \f$n = degree + 1\f$ and \f$m = dimension\f$.
 
 @tparam RealScalar Type of data being passed in. Valid types are float and double.
 @tparam Point Container type for the  control points. Must have [] accessor. [0] = x, [1] = y, and if 3d, [2] = z.
-@param	points Control points. Number of control points for each segment should be \f$degree + 1\f$
-@param	segment_id Indicates which segment of the composite Bézier curve to process. Numbering
-starts at 0.
+@param	coefficients Coefficients of the curve. Each segment should have 
+        \f$\left(degree + 1\right) * dimension\f$ coefficients.
+@param	segment_id Indicates which segment of the composite Bézier curve to process. 
+        Numbering starts at 0.
 @param	degree Degree of the Bézier curve.
 @param	dimension Dimension of coefficients. Valid options are bezier::k2d or bezier::k3d
 @return	Control points calculated from the coefficients.
@@ -136,31 +143,23 @@ template <typename RealScalar, typename Point>
 std::vector<Point> GetControlPoints(const std::vector<RealScalar>& coefficients,
   const size_t segment_id, const size_t degree, const size_t dimension) {
   std::vector<Point> control_points;
-  const size_t coefficient_size = coefficients.size();
   const size_t order = degree + 1;
   const size_t segment_size = order * dimension;
-  const size_t segment_count = coefficient_size / segment_size;
+  const size_t segment_count = coefficients.size() / segment_size;
   
   if (segment_id >= segment_count) {
     return control_points;
   }
   const size_t segment_index = segment_id * segment_size;
 
-  //const double* dp = coefficients.data() + segment_index;
   Eigen::Map<const Eigen::Matrix<RealScalar, Dynamic, Dynamic>>
     coeff_map(coefficients.data() + segment_index, order, dimension);
-  //Eigen::Matrix<RealScalar, Dynamic, Dynamic> coefficient_matrix(order, dimension);
-  //for (size_t j = 0; j < dimension; ++j) {
-  //  for (size_t k = 0; k < order; ++k) {
-  //    coefficient_matrix(k, j) = coefficients[segment_index + (j * order) + k];
-  //  }
-  //}
 
   // Create and fill the coefficients of the power basis matrix
   Eigen::Matrix<RealScalar, Dynamic, Dynamic> basis = GetPowerCoefficients<RealScalar>(degree);
   basis.colwise().reverseInPlace();
   Eigen::Matrix<RealScalar, Dynamic, Dynamic> basis_inverse = basis.inverse();
-
+  
   // Calculate the control points
   Eigen::Matrix<RealScalar, Dynamic, Dynamic> result(order, dimension);
   result = basis_inverse * coeff_map;
@@ -169,9 +168,9 @@ std::vector<Point> GetControlPoints(const std::vector<RealScalar>& coefficients,
   size_t row_count = static_cast<size_t>(result.rows());
   size_t col_count = static_cast<size_t>(result.cols());
   Point control_point;
-  for (size_t p = 0; p < row_count; ++p) {
-    for (size_t q = 0; q < col_count; ++q) {
-      control_point[q] = result(p, q);
+  for (size_t i = 0; i < row_count; ++i) {
+    for (size_t j = 0; j < col_count; ++j) {
+      control_point[j] = result(i, j);
     }
     control_points.push_back(control_point);
   }
@@ -270,12 +269,8 @@ Point GetFirstDerivative(const std::vector<Point>& points, const RealScalar t,
 	coefficients = GetCoefficients<RealScalar>(points, segment_id, degree, dimension);
 	
   // Create and fill Eigen matrix with coefficients
-	Eigen::Matrix<RealScalar, Dynamic, Dynamic> C(degree, dimension);
-	for (size_t i = 0, p = 0; p < degree; i += dimension, ++p) {
-		for (size_t q = 0; q < dimension; ++q) {
-			C(p, q) = coefficients[i + q];
-		}
-	}
+  Eigen::Map<const Eigen::Matrix<RealScalar, Dynamic, Dynamic>>
+    C(coefficients.data(), degree, dimension);
 	
   // Create and fill the power basis matrix
 	Eigen::Matrix<RealScalar, 1, Dynamic> parameter(1, degree);
@@ -332,12 +327,8 @@ Point GetSecondDerivative(const std::vector<Point>& points, const RealScalar t,
 	coefficients = GetCoefficients<RealScalar>(points, segment_id, degree, dimension);
 	
   // Create and fill Eigen matrix with coefficients
-	Eigen::Matrix<RealScalar, Dynamic, Dynamic> C(degree, dimension);
-	for (size_t i = 0, p = 0; p < degree; i += dimension, ++p) {
-		for (size_t q = 0; q < dimension; ++q) {
-			C(p, q) = coefficients[i + q];
-		}
-	}
+  Eigen::Map<const Eigen::Matrix<RealScalar, Dynamic, Dynamic>>
+    C(coefficients.data(), degree, dimension);
 	
   // Create and fill the power basis matrix
 	Eigen::Matrix<RealScalar, 1, Dynamic> parameter(1, matrix_size);
@@ -622,7 +613,8 @@ std::vector<Point> ElevateDegree(const std::vector<Point>& points) {
 	Eigen::Matrix<double, order, dimension> P;
 	for (size_t i = 0; i < segment_count; ++i) {
 		const size_t segment_index = i * order;
-		// Fill Eigen::Matrix with control points for current segment
+
+    // Fill Eigen::Matrix with control points for current segment
 		for (size_t j = segment_index, p = 0; j < segment_index + order; ++j, ++p) {
 			for (size_t k = 0; k < dimension; ++k) {
 				P(p, k) = points[j][k];
@@ -634,23 +626,27 @@ std::vector<Point> ElevateDegree(const std::vector<Point>& points) {
 			point[j] = P(0, j);
 		}
 		elevated_points.push_back(point);
-		// Calculate the new elevated control points
+
+    // Calculate the new elevated control points
 		Eigen::Matrix<double, degree, 1> M1(Eigen::Matrix<double, degree, 1>::LinSpaced(degree, (1.0 / order),
 			static_cast<double>(degree) / order));
 		Eigen::Matrix<double, degree, dimension> Q =
 			(M1.asDiagonal() * P.topRows<degree>()) + (M1.reverse().asDiagonal() * P.bottomRows<degree>());
-		// Add new control points to elevated points
+
+    // Add new control points to elevated points
 		for (size_t j = 0; j < degree; ++j) {
 			for (size_t k = 0; k < dimension; ++k) {
 				point[k] = Q(j, k);
 			}
 			elevated_points.push_back(point);
 		}
-		// Last point stays the same so add to elevated points
+
+    // Last point stays the same so add to elevated points
 		for (size_t j = 0; j < dimension; ++j) {
 			point[j] = P(degree, j);
 		}
-		elevated_points.push_back(point);
+
+    elevated_points.push_back(point);
 	}
 	
   return elevated_points;

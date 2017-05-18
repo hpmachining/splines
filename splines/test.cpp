@@ -39,7 +39,7 @@ void TestDegreeElevation() {
   std::vector<double> all_coefficients = bezier::GetCoefficients<double>(points, 0, 3, 2);
   std::vector<double> coefficients = bezier::GetCoefficients<double>(points, 1, 3, 2);
   all_coefficients.insert(std::end(all_coefficients), std::begin(coefficients), std::end(coefficients));
-  all_coefficients = bezier::ConvertCoefficientLayoutToKC(all_coefficients, 3, 2);
+  //all_coefficients = bezier::ConvertCoefficientLayoutToKC(all_coefficients, 3, 2);
   std::cout << "\nCoefficients\n";
   for (auto i : all_coefficients) {
     std::cout << i << '\n';
