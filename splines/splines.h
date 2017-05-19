@@ -106,7 +106,6 @@ std::vector<RealScalar> GetCoefficients(const std::vector<Point>& points,
   // Calculate the coefficients
 	Eigen::Matrix<RealScalar, Dynamic, Dynamic> result(order, dimension);
 	result = basis * control_points;
-  std::cout << "\nCoefficient matrix\n" << result << '\n';
 	
   // Add coefficients to std::vector
 	size_t row_count = static_cast<size_t>(result.rows());

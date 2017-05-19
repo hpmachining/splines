@@ -21,7 +21,7 @@ void WriteFile(const std::string& file, const Eigen::Matrix<RealScalar, rows, co
 
 void TestDegreeElevation() {
 	using Point = Eigen::Vector2d;
-	const size_t dimension = 2; // 2d or 3d points
+  size_t dimension = 2; // 2d or 3d points
 	const size_t degree = 3;
 	const size_t order = degree + 1;
 
@@ -36,29 +36,41 @@ void TestDegreeElevation() {
   for (auto i : points) {
     std::cout << i[0] << " " << i[1] << "\n";
   }
-  std::vector<double> all_coefficients = bezier::GetCoefficients<double>(points, 0, 3, 2);
-  std::vector<double> coefficients = bezier::GetCoefficients<double>(points, 1, 3, 2);
-  all_coefficients.insert(std::end(all_coefficients), std::begin(coefficients), std::end(coefficients));
-  //all_coefficients = bezier::ConvertCoefficientLayoutToKC(all_coefficients, 3, 2);
+  size_t segment_count = points.size() / order;
+  std::vector<double> all_coefficients;
+  for (size_t i = 0; i < segment_count; ++i) {
+    std::vector<double> coefficients = bezier::GetCoefficients<double>(points, i, degree, dimension);
+    all_coefficients.insert(std::end(all_coefficients), std::begin(coefficients), std::end(coefficients));
+  }
   std::cout << "\nCoefficients\n";
   for (auto i : all_coefficients) {
     std::cout << i << '\n';
   }
- // std::cout << "\nElevated control points\n";
-	//std::vector<Point> elevated_points = bezier::ElevateDegree<double, bezier::k2d, degree>(points);
-	//for (auto i : elevated_points) {
-	//	std::cout << i[0] << " " << i[1] << "\n";
-	//}
- // std::vector<double> coeffs = bezier::GetCoefficients<double>(elevated_points, 1, degree + 1, bezier::k2d);
- // std::cout << "\nCoefficients\n";
- // for (auto i : coeffs) {
- //   std::cout << i << '\n';
- // }
+  std::cout << "\nElevated control points\n";
+	std::vector<Point> elevated_points = bezier::ElevateDegree<double, bezier::k2d, degree>(points);
+  size_t elevated_degree = degree + 1;
+  size_t elevated_order = order + 1;
+  for (auto i : elevated_points) {
+		std::cout << i[0] << " " << i[1] << "\n";
+	}
 
-  std::vector<Point> cp_coeff = bezier::GetControlPoints<double, Point>(all_coefficients, 1, 3, 2);
+  all_coefficients.clear();
+  
+  for (size_t i = 0; i < segment_count; ++i) {
+    std::vector<double> elevated_coefficients = bezier::GetCoefficients<double>(elevated_points, i, elevated_degree, dimension);
+    all_coefficients.insert(std::end(all_coefficients), std::begin(elevated_coefficients), std::end(elevated_coefficients));
+  }
+  std::cout << "\nElevated Coefficients\n";
+  for (auto i : all_coefficients) {
+    std::cout << i << '\n';
+  }
+
   std::cout << "\nControl points from coefficients\n";
-  for (auto i : cp_coeff) {
-    std::cout << i[0] << " " << i[1] << "\n";
+  for (size_t i = 0; i < segment_count; ++i) {
+    std::vector<Point> cp_coeff = bezier::GetControlPoints<double, Point>(all_coefficients, i, elevated_degree, dimension);
+    for (auto i : cp_coeff) {
+      std::cout << i[0] << " " << i[1] << "\n";
+    }
   }
 
 
