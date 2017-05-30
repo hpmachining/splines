@@ -268,20 +268,21 @@ Point GetFirstDerivative(const std::vector<Point>& points, const RealScalar t,
 	coefficients = GetCoefficients<RealScalar>(points, segment_id, degree, dimension);
 	
   // Create and fill Eigen matrix with coefficients
-  Eigen::Map<const Eigen::Matrix<RealScalar, Dynamic, Dynamic>>
-    C(coefficients.data(), degree, dimension);
-  std::cout << "\nCoefficients:\n" << C << '\n';
+  //Eigen::Map<const Eigen::Matrix<RealScalar, Dynamic, Dynamic>>
+  //  C(coefficients.data(), order, dimension);
+  Eigen::Matrix<RealScalar, Dynamic, Dynamic> C;
+  C.resize(order, dimension);
+  C = Eigen::Map<const Eigen::Matrix<RealScalar, Dynamic, Dynamic>>(coefficients.data(), order, dimension);
+  C = C.block(0, 0, degree, dimension).eval();
   // Create and fill the power basis matrix
 	Eigen::Matrix<RealScalar, 1, Dynamic> parameter(1, degree);
 	for (size_t i = 0; i < degree; ++i) {
 		parameter(0, i) = std::pow(t, i);
 	}
-  std::cout << "\nPower:\n" << parameter << '\n';
 
   // Create and fill the coefficients of the power basis matrix
 	Eigen::Matrix<RealScalar, Dynamic, Dynamic> basis(degree, degree);
 	basis << GetTangentCoefficients<RealScalar>(degree);
-  std::cout << "\nPower Coefficients:\n" << basis << '\n';
 
   // Calculate first derivative (tangent)
 	Eigen::Matrix<RealScalar, Dynamic, 1> result;

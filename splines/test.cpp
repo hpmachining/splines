@@ -372,7 +372,7 @@ void TestLength() {
     sum += derived_sum;
   }
   double length = z * sum;
-  std::cout << "\nlength = " << length << '\n';
+  std::cout << std::setprecision(15) << std::fixed << "\nlength = " << length << '\n';
   return;
 }
 
