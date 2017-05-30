@@ -271,6 +271,111 @@ void GnuPlotPoints() {
 
 }
 
+void TestLength() {
+  using Point = Eigen::Vector2d;
+  size_t dimension = 2; // 2d or 3d points
+  const size_t degree = 3;
+  const size_t order = degree + 1;
+
+  // Read control points from file
+  Point point;
+  std::vector<Point> points;
+  while (std::cin >> point.x() >> point.y()) {// >> point.z()) {
+    points.push_back(point);
+  }
+  Eigen::Matrix<double, 32, 1> A;
+  A <<
+    -0.0483076656877383,
+    0.0483076656877383,
+    -0.1444719615827965,
+    0.1444719615827965,
+    -0.2392873622521371,
+    0.2392873622521371,
+    -0.3318686022821277,
+    0.3318686022821277,
+    -0.4213512761306353,
+    0.4213512761306353,
+    -0.5068999089322294,
+    0.5068999089322294,
+    -0.5877157572407623,
+    0.5877157572407623,
+    -0.6630442669302152,
+    0.6630442669302152,
+    -0.7321821187402897,
+    0.7321821187402897,
+    -0.7944837959679424,
+    0.7944837959679424,
+    -0.8493676137325700,
+    0.8493676137325700,
+    -0.8963211557660521,
+    0.8963211557660521,
+    -0.9349060759377397,
+    0.9349060759377397,
+    -0.9647622555875064,
+    0.9647622555875064,
+    -0.9856115115452684,
+    0.9856115115452684,
+    -0.9972638618494816,
+    0.9972638618494816;
+    //std::cout << std::setprecision(16) << std::fixed << A << '\n';
+  Eigen::Matrix<double, 32, 1> W;
+  W <<
+    0.0965400885147278,
+    0.0965400885147278,
+    0.0956387200792749,
+    0.0956387200792749,
+    0.0938443990808046,
+    0.0938443990808046,
+    0.0911738786957639,
+    0.0911738786957639,
+    0.0876520930044038,
+    0.0876520930044038,
+    0.0833119242269467,
+    0.0833119242269467,
+    0.0781938957870703,
+    0.0781938957870703,
+    0.0723457941088485,
+    0.0723457941088485,
+    0.0658222227763618,
+    0.0658222227763618,
+    0.0586840934785355,
+    0.0586840934785355,
+    0.0509980592623762,
+    0.0509980592623762,
+    0.0428358980222267,
+    0.0428358980222267,
+    0.0342738629130214,
+    0.0342738629130214,
+    0.0253920653092621,
+    0.0253920653092621,
+    0.0162743947309057,
+    0.0162743947309057,
+    0.0070186100094701,
+    0.0070186100094701;
+
+  //std::cout << W;
+
+  auto rows = W.rows();
+  double z = .5;
+  double sum = 0.0;
+  for (auto i = 0; i < rows; ++i) {
+    double a = A(i, 0);
+    double w = W(i, 0);
+    double t = z * a + z;
+    Point derived = bezier::GetFirstDerivative(points, t, 0, degree, dimension);
+    //std::cout << "\nt = " << t << '\n';
+    //std::cout << "derived = " << derived.transpose() << '\n';
+    derived = derived.array().square();
+    double derived_sum = derived.sum();
+    derived_sum = std::sqrt(derived_sum);
+    derived_sum *= w;
+    sum += derived_sum;
+  }
+  double length = z * sum;
+  std::cout << "\nlength = " << length << '\n';
+  return;
+}
+
 //int main(void) {
 //  Eigen::Affine3d transform;
 //  transform.setIdentity();
@@ -310,8 +415,9 @@ int main(void) {
 	using bezier::k3d;
 	//TestMatrix();
 	//TestFirstDerivative();
-	TestDegreeElevation();
+	//TestDegreeElevation();
   //GnuPlotPoints();
+  TestLength();
 
 	//Eigen::Vector3d controlPoint;
 	//std::vector<Eigen::Vector3d> controlPoints;
