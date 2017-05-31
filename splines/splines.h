@@ -633,7 +633,7 @@ std::vector<Point> ElevateDegree(const std::vector<Point>& points) {
 		Eigen::Matrix<double, degree, 1> M1(Eigen::Matrix<double, degree, 1>::LinSpaced(degree, (1.0 / order),
 			static_cast<double>(degree) / order));
 		Eigen::Matrix<double, degree, dimension> Q =
-			(M1.asDiagonal() * P.topRows<degree>()) + (M1.reverse().asDiagonal() * P.bottomRows<degree>());
+			(M1.asDiagonal() * P.template topRows<degree>()) + (M1.reverse().asDiagonal() * P.template bottomRows<degree>());
 
     // Add new control points to elevated points
 		for (size_t j = 0; j < degree; ++j) {
