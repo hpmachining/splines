@@ -10,7 +10,7 @@ A collection of templated functions for working with Bézier curves.
 
 #include "SplineHelper.h"
 #include <cmath>
-#include <limits>
+//#include <limits>
 #include <vector>
 #include <iostream>
 #include <Eigen/Dense>
