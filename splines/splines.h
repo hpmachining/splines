@@ -7,6 +7,7 @@ A collection of templated functions for working with Bézier curves.
 */
 
 #pragma once
+#pragma warning (disable : 4996)
 
 #include "SplineHelper.h"
 #include <cmath>
@@ -15,6 +16,8 @@ A collection of templated functions for working with Bézier curves.
 #include <iostream>
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
+#include <Eigen/MPRealSupport>
+#include <mpreal.h>
 
 namespace bezier {
 
@@ -277,7 +280,8 @@ Point GetFirstDerivative(const std::vector<Point>& points, const RealScalar t,
   // Create and fill the power basis matrix
 	Eigen::Matrix<RealScalar, 1, Dynamic> parameter(1, degree);
 	for (size_t i = 0; i < degree; ++i) {
-		parameter(0, i) = std::pow(t, i);
+    parameter(0, i) = mpfr::pow(static_cast<RealScalar>(t), static_cast<unsigned long>(i));
+    //parameter(0, i) = std::pow(t, i);
 	}
 
   // Create and fill the coefficients of the power basis matrix

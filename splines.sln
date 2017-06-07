@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26403.3
+VisualStudioVersion = 15.0.26430.6
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "splines", "splines\splines.vcxproj", "{1D3BBD31-1A80-4F70-9FC7-417FB7C88FAD}"
 EndProject
@@ -44,17 +44,14 @@ Global
 		{3A31C9ED-00B6-4C3D-BD9B-3D7D147A7B97}.Release|x64.ActiveCfg = Release|x64
 		{3A31C9ED-00B6-4C3D-BD9B-3D7D147A7B97}.Release|x86.ActiveCfg = Release|Win32
 		{D1EBA80F-3B04-4FDE-8075-7935794A14E3}.Debug|x64.ActiveCfg = Debug|x64
-		{D1EBA80F-3B04-4FDE-8075-7935794A14E3}.Debug|x64.Build.0 = Debug|x64
 		{D1EBA80F-3B04-4FDE-8075-7935794A14E3}.Debug|x86.ActiveCfg = Debug|Win32
 		{D1EBA80F-3B04-4FDE-8075-7935794A14E3}.Debug|x86.Build.0 = Debug|Win32
 		{D1EBA80F-3B04-4FDE-8075-7935794A14E3}.Release|x64.ActiveCfg = Release|x64
 		{D1EBA80F-3B04-4FDE-8075-7935794A14E3}.Release|x86.ActiveCfg = Release|Win32
 		{5C661A81-FC74-4BBF-A3B6-5D72DD35D55C}.Debug|x64.ActiveCfg = Debug|x64
-		{5C661A81-FC74-4BBF-A3B6-5D72DD35D55C}.Debug|x64.Build.0 = Debug|x64
 		{5C661A81-FC74-4BBF-A3B6-5D72DD35D55C}.Debug|x86.ActiveCfg = Debug|Win32
 		{5C661A81-FC74-4BBF-A3B6-5D72DD35D55C}.Debug|x86.Build.0 = Debug|Win32
 		{5C661A81-FC74-4BBF-A3B6-5D72DD35D55C}.Release|x64.ActiveCfg = Release|x64
-		{5C661A81-FC74-4BBF-A3B6-5D72DD35D55C}.Release|x64.Build.0 = Release|x64
 		{5C661A81-FC74-4BBF-A3B6-5D72DD35D55C}.Release|x86.ActiveCfg = Release|Win32
 		{5C661A81-FC74-4BBF-A3B6-5D72DD35D55C}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
