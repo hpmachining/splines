@@ -60,6 +60,9 @@ std::vector<Point> SplitSegment(const std::vector<Point>& points, const RealScal
 template <typename RealScalar, Dimension dimension, size_t degree, typename Point>
 std::vector<Point> ElevateDegree(const std::vector<Point>& points);
 
+template <typename RealScalar, typename Point>
+std::vector<Point> ElevateDegree(const std::vector<Point>& points, size_t dimension, size_t degree);
+
 /**
 @brief	Calculate the coefficients derived from a segment of a composite Bézier curve.
 
@@ -280,8 +283,7 @@ Point GetFirstDerivative(const std::vector<Point>& points, const RealScalar t,
   // Create and fill the power basis matrix
 	Eigen::Matrix<RealScalar, 1, Dynamic> parameter(1, degree);
 	for (size_t i = 0; i < degree; ++i) {
-    parameter(0, i) = mpfr::pow(static_cast<RealScalar>(t), static_cast<unsigned long>(i));
-    //parameter(0, i) = std::pow(t, i);
+    parameter(0, i) = std::pow(t, i);
 	}
 
   // Create and fill the coefficients of the power basis matrix
@@ -616,7 +618,7 @@ std::vector<Point> ElevateDegree(const std::vector<Point>& points) {
 	const size_t segment_count = points.size() / order;
 
 	std::vector<Point> elevated_points;
-	Eigen::Matrix<double, order, dimension> P;
+	Eigen::Matrix<RealScalar, order, dimension> P;
 	for (size_t i = 0; i < segment_count; ++i) {
 		const size_t segment_index = i * order;
 
@@ -634,9 +636,9 @@ std::vector<Point> ElevateDegree(const std::vector<Point>& points) {
 		elevated_points.push_back(point);
 
     // Calculate the new elevated control points
-		Eigen::Matrix<double, degree, 1> M1(Eigen::Matrix<double, degree, 1>::LinSpaced(degree, (1.0 / order),
-			static_cast<double>(degree) / order));
-		Eigen::Matrix<double, degree, dimension> Q =
+		Eigen::Matrix<RealScalar, degree, 1> M1(Eigen::Matrix<RealScalar, degree, 1>::LinSpaced(degree, (1.0 / order),
+			static_cast<RealScalar>(degree) / order));
+		Eigen::Matrix<RealScalar, degree, dimension> Q =
 			(M1.asDiagonal() * P.template topRows<degree>()) + (M1.reverse().asDiagonal() * P.template bottomRows<degree>());
 
     // Add new control points to elevated points
@@ -655,6 +657,67 @@ std::vector<Point> ElevateDegree(const std::vector<Point>& points) {
     elevated_points.push_back(point);
 	}
 	
+  return elevated_points;
+}
+
+/**
+@brief	Elevate degree of a composite Bézier curve by one.
+
+@tparam RealScalar Type of data being passed in. Valid types are float and double.
+@tparam Point Container type for the points. Must have [] accessor. [0] = x, [1] = y and if 3d, [2] = z.
+@param	points Control points of a composite Bézier. Number of control points for each segment
+        should be \f$degree + 1\f$
+@param	dimension Dimension of control point coordinates. Valid options are bezier::k2d or bezier::k3d
+@param	degree Degree of the inputed composite Bézier curve.
+@return	Control points of the elevated composite curve.
+*/
+template <typename RealScalar, typename Point>
+std::vector<Point> ElevateDegree(const std::vector<Point>& points, const size_t dimension, const size_t degree) {
+  const size_t order = degree + 1;
+  const size_t segment_count = points.size() / order;
+
+  std::vector<Point> elevated_points;
+  Eigen::Matrix<RealScalar, Dynamic, Dynamic> P;
+  P.resize(order, dimension);
+  for (size_t i = 0; i < segment_count; ++i) {
+    const size_t segment_index = i * order;
+
+    // Fill Eigen::Matrix with control points for current segment
+    for (size_t j = segment_index, p = 0; j < segment_index + order; ++j, ++p) {
+      for (size_t k = 0; k < dimension; ++k) {
+        P(p, k) = points[j][k];
+      }
+    }
+    // First point stays the same so add to elevated points
+    Point point;
+    for (size_t j = 0; j < dimension; ++j) {
+      point[j] = P(0, j);
+    }
+    elevated_points.push_back(point);
+
+    // Calculate the new elevated control points
+    Eigen::Matrix<RealScalar, Dynamic, 1> M = Eigen::Matrix<RealScalar, Dynamic, 1>::LinSpaced(degree, (1.0 / order),
+      static_cast<RealScalar>(degree) / order);
+    Eigen::Matrix<RealScalar, Dynamic, Dynamic> Q;
+    Q.resize(degree, dimension);
+    Q = (M.asDiagonal() * P.topRows(degree)) + (M.reverse().asDiagonal() * P.bottomRows(degree));
+
+    // Add new control points to elevated points
+    for (size_t j = 0; j < degree; ++j) {
+      for (size_t k = 0; k < dimension; ++k) {
+        point[k] = Q(j, k);
+      }
+      elevated_points.push_back(point);
+    }
+
+    // Last point stays the same so add to elevated points
+    for (size_t j = 0; j < dimension; ++j) {
+      point[j] = P(degree, j);
+    }
+
+    elevated_points.push_back(point);
+  }
+
   return elevated_points;
 }
 
